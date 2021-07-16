@@ -1,0 +1,8 @@
+This repository cosists of the following files:
+* README.md
+* how_wrong_003_simulation_functions.R: script contains simulation functions for generating OxCal WMD and Uniform Bound Sequence Models.
+* how_wrong_004_parsing_functions.r: script contains functions used for parsing OxCal output into R tibbles.
+* licence.txt
+* offset_rmd_001_oxcal_sims.nb.html: a detailed description of the suimulation functions.
+* offset_rmd_003_oxcal_parsing.nb.html: a detail description of the parsing functions.
+* offset_rmd_004_single_sims.nb.html: an overview of simulating single radiocarbon dates and comparison between an r-based approach and using OxCal R_Simulate(); function.
