@@ -93,7 +93,7 @@ There are infinitely more more spaces for improvement that I have not commented 
 
 
 ## LICENCE
-This project is made available under the GNU General Public License v3.0 (see License.txt). 
+This project is made available under the GNU General Public License v3.0 (see license.txt). 
 
 
 ## References
