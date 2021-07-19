@@ -1,8 +1,16 @@
 This repository cosists of the following files:
 * README.md
-* how_wrong_003_simulation_functions.R: script contains simulation functions for generating OxCal WMD and Uniform Bound Sequence Models.
-* how_wrong_004_parsing_functions.r: script contains functions used for parsing OxCal output into R tibbles.
 * licence.txt
-* offset_rmd_001_oxcal_sims.nb.html: a detailed description of the suimulation functions.
-* offset_rmd_003_oxcal_parsing.nb.html: a detail description of the parsing functions.
-* offset_rmd_004_single_sims.nb.html: an overview of simulating single radiocarbon dates and comparison between an r-based approach and using OxCal R_Simulate(); function.
+* actionable.md (list of __immediate__ to dos)
+* .r_scripts: a folder of scripts for easy function load/reproduction from r.
+  - 001
+  - 002
+* .rmd_notebooks: a folder with more detailed function descriptions for inspection and review in .rmd format.
+  - 001
+  - 002
+  - 003
+
+Future folders:
+* simulation_results: processed result tables from simulations carried out by the author (raw oxcal output to be made available via Dropbox public link)
+* shiny_app: building the 14C power and sensitivity Shiny app
+* parameter_files: all the model input parameters used in the authors' sensitivity and pwer analysis
