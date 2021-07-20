@@ -43,6 +43,4 @@ This repository cosists of the following files:
   - seqs_033_params.csv
   
 Future folders:
-* simulation_results: processed result tables from simulations carried out by the author (raw oxcal output to be made available via Dropbox public link)
 * shiny_app: building the 14C power and sensitivity Shiny app
-* parameter_files: all the model input parameters used in the authors' sensitivity and pwer analysis
