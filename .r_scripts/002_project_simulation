@@ -1,12 +1,11 @@
-####Target - have one iteration samples for each of the simulations in here.
-##Check the numbers of sims
+##Set to single simulation to avoid accidental overwriting etc.
 library(tidyverse)
-source("how_wrong_003_simulation_functions.R")
-oxcal_dir <- "C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/"
+source("001_simulation_tools.R")
+oxcal_dir <- "C:/Users/your_username/your_oxcal_folder/"
 
 #wmds021 simulation-------------------------------------------------------
 wmds_021_names <- str_c(oxcal_dir, "Sensitivity021WMDs/Sensitivity021WMDs", 1:60000)
-wmds_021_params <- read_csv("WMDs021Params.csv")
+wmds_021_params <- read_csv("wmds_021_params.csv")
 
 for(i in 1:1){
   write.table(simulate_wmds(target = wmds_021_params$Targets[i],
@@ -24,9 +23,9 @@ for(i in 1:1){
 
 #wmds022 simulation-------------------------------------------------------
 wmds_022_names <- str_c(oxcal_dir, "Sensitivity022WMDs/Sensitivity022WMDs", 1:5000)
-wmds_022_params <- read_csv("WMDs022Params.csv")
+wmds_022_params <- read_csv("wmds_022_params.csv")
 
-for(i in 1:5000){
+for(i in 1:1){
   write.table(simulate_wmds(target = wmds_022_params$Targets[i],
                             span = wmds_022_params$Span[i],
                             n_samples = wmds_022_params$Samples[i],
@@ -41,7 +40,7 @@ for(i in 1:5000){
 
 #wmds023 simulation-------------------------------------------------------
 wmds_023_names <- str_c(oxcal_dir, "Sensitivity023WMDs/Sensitivity023WMDs", 1:20000)
-wmds_023_params <- read_csv("WMDs023Params.csv")
+wmds_023_params <- read_csv("wmds_023_params.csv")
 
 for(i in 1:1){
   write.table(simulate_wmds(target = wmds_023_params$Targets[i],
@@ -59,7 +58,7 @@ for(i in 1:1){
 
 #wmds024 simulation-------------------------------------------------------
 wmds_024_names <- str_c(oxcal_dir, "Sensitivity024WMDs/Sensitivity024WMDs", 1:20000)
-wmds_024_params <- read_csv("WMDs024Params.csv")
+wmds_024_params <- read_csv("wmds_024_params.csv")
 
 for(i in 1:1){
   write.table(simulate_wmds(target = wmds_024_params$Targets[i],
@@ -77,7 +76,7 @@ for(i in 1:1){
 
 #wmds025 simulation-------------------------------------------------------
 wmds_025_names <- str_c(oxcal_dir, "Sensitivity025WMDs/Sensitivity025WMDs", 1:300000)
-wmds_025_params <- read_csv("WMDs025Params.csv")
+wmds_025_params <- read_csv("wmds_025_params.csv")
 
 for(i in 1:1){
   write.table(simulate_wmds(target = wmds_025_params$Targets[i],
@@ -95,7 +94,7 @@ for(i in 1:1){
 #seqs031 simulation-------------------------------------------------------
 seqs_031_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:30000)
 
-seqs_031_params <- read_csv("Seqs032Params.csv")
+seqs_031_params <- read_csv("seqs_031_params.csv")
 
 for (i in 1:1) {
   write.table(simulate_seqs(tsb = seqs_031_params$Targets[i],
@@ -118,7 +117,7 @@ for (i in 1:1) {
 oxcal_dir <- "C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/"
 seqs_032_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:2500)
 
-seqs_032_params <- read_csv("Seqs032Params.csv")
+seqs_032_params <- read_csv("seqs_031_params.csv")
 
 for (i in 1:1) {
   write.table(simulate_seqs(tsb = seqs_032_params$Targets[i],
@@ -142,7 +141,7 @@ for (i in 1:1) {
 oxcal_dir <- "C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/"
 seqs_033_names <- str_c(oxcal_dir, "Sensitivity033Seqs/Sensitivity033Seqs", 1:6000)
 
-seqs_033_params <- read_csv("Seqs033Params.csv")
+seqs_033_params <- read_csv("seqs_033_params.csv")
 
 for (i in 1:1) {
   write.table(simulate_seqs(tsb = seqs_033_params$Targets[i],
