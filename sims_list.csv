@@ -1,0 +1,12 @@
+Model Type,Parameter Ranges,Simulation Number,Calibration Curve,Offset (14C years),Notes,Number of simulations,,Additional notes
+,,11,IntCal20,-50 : 50,,"10,000",,Revise 
+Single Calibration,Measurement Uncertainty: 8 - 35 14C years,12,IntCal20,-50 : 50,Run with the IntCal20 predictive interval built into the simulation,"10,000",,
+,,13,IntCal20,-50 : 50,Run through OxCal,"10,000",,
+,,21,IntCal20,-50 : 50,Split into exploratory and test groups for regression,"60,000",,
+14C wiggle-match dates,Measurement Uncertainty: 8 - 35 14C years; Span: 25 -100 cal years; Samples 2 -25; Offset Variability: 0 - 26.5 14C years,22,IntCal13,NA,"Simulated from IntCal13 and calibrated against IntCal20 for the period 200 - 1,200 cal BP","5,000",,
+,,23,IntCal20,-50 : 50,"Target a plateau: 9,901 -10,100 cal BP","20,000",,
+,,24,IntCal20,-50 : 50,"Target a ""steep"" section of the curve: 6,801 - 7,000 cal BP","20,000",,
+,,25,IntCal20,-50 : 50,"Large simulation for rolling regression over the period 2,001 - 3,500 cal BC; Split into exploratory and confirmation group for regression.","300,000",,
+Uniform bound sequences,Measurement Uncertainty: 8 - 35 14C years; Span: 30 - 200 cal years; Phases: 1 - 10; Samples: 10 -40; Offset Variability: 0 - 26.5 14C years,31,IntCal20,-50 : 50,,"30,000",,
+,,32,IntCal13,NA,"Simulated from IntCal13 and calibrated against IntCal20 for the period 200 - 1,200 cal BP","2,500",,
+,Measurement Uncertainty: 8 - 35 14C years; Span: 30 - 200 cal years; Phases: 1; Samples: 10 - 40; Offset Variability: 0 - 26.5 14C years,33,IntCal20,-50 : 50,Assess shrinkage effects in uniform bound phase models,"6,000",,

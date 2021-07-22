@@ -1,0 +1,878 @@
+---
+title: "How wrong before it gets *wrong*? Radiocarbon sensitivity with OxCal and R."
+subtitle: "Simulating single calibrations"
+author: "Pete Jacobsson"
+output: html_notebook
+---
+
+## Introduction
+This notebook covers simulation of single calibrated radiocarbon dates offset by a known value on the radiocarbon time-scale (in 14C yrs BP). The purpose of this exercise is to assess how systematic offsets affect the accuracy of single radicoarbon determinations and how this interacts with varying measurement precision. 
+
+This is a part of a larger project (SEE LINK TO BLOG)the bulk of which included direct passing of simulations to OxCal interfacing from R. However, for studying offset effects in single calibrations it is more efficient to generate the scripts in R, pass them manually to OxCal, extract the results through copy/pasting to a .csv file and clean them in R.
+
+The simulations inputs consist of the following variables:
+* target_year: the year when the simulatyed sample would have died.
+* offset_magnitude: the scale of a systematic offset magnitude in 14C years.
+* measurement_errors: the magnitude of simulated measurement error (1-s, counted in 14C yrs).
+
+The final output consists of:
+* evaluating the accuracy of the 68% and 95% HPD cal BP ranges of the simulated radiocarbon dates (a binary 0/1 value).
+* evaluating how far the edge of the 68% and 95% HPD ranges is from the target date (0 for accurate ranges, measured in cal BP).
+
+We carried out three simulations
+* Simulation 011 isd the core simulation of this study and is used to estimate how systematic offset affects calibrated date accuracy.
+* Simulations 012 and 013 are used to test the reliability of the simulation algorithm. Sim 012 further randomizes the simulation output by the predictive interval of the calibration curve. Sim 013 selects a number of dates and generates scripts of OxCal R_Simulate() values for these dates. Simulation can then be run and the output of the radiocarbon ages provided by OxCal offset and re-run using the R_Date() function. Convergence of the results between 012 and 013 indicates the overall equivalence of the algorithm to that used in OxCal.
+
+These simulations rely on base R. project carried out using the interpolated IntCal20 curve for the period 0 - 12310 cal BP. The curve provided as part of the project was interpolated using OxCal 4.3.2 and parsed from an OxCal output file.
+```{r, eval=FALSE}
+#Interpolating IntCal20
+write.table('Options(){Resolution = 1}; Plot(){R_Date("Chupacabra", 5000,100);};',
+  file = "IntCalInterpolation.input", row.names = F, quote = F, col.names = F
+  ) #
+
+system(paste("C:/Users/Pete.C14/Progs/OxCal/bin/OxCalWin.exe", "IntCalInterpolation.input"))
+  ## This uses OxCal's inbuilt interpolator - note using the old 4.3 intrpolator here due to tech issues of OxCal 4
+
+  ### scan("IntCal20Interpolated.txt", sep = ",", quote = "") #Requires copy-pasting the calibration curve data from OxCal .js output file to a text file. Can be improved by direct parsing out of the .js file using regex.
+
+IntCal20Interpolated <- read.delim("IntCal20Interpolated.txt", sep = ",", header = F)
+
+IntCal20InterpolatedBP <- as.numeric(as.character(IntCal20Interpolated[1, ]))[-1]
+IntCal20InterpolatedSigma <- as.numeric(as.character(IntCal20Interpolated[2, ]))[-1]
+
+IntCal20InterpolatedBP <- IntCal20InterpolatedBP[2:12311]
+IntCal20InterpolatedSigma <- IntCal20InterpolatedSigma[2:12311]
+
+IntCal20InterpolatedBP <- rev(IntCal20InterpolatedBP)
+IntCal20InterpolatedSigma <- rev(IntCal20InterpolatedSigma)
+
+IntCal20 <- data.frame(CalBP = seq(1, 12310, by = 1), BP = IntCal20InterpolatedBP, Error = IntCal20InterpolatedSigma) #Action: change to R style guide compatible_underscore_style throughout the code in this file.
+
+write.csv(IntCal20, "IntCal20Interpolated.csv")
+
+cal_curve <- read.csv("IntCal20Interpolated.csv")
+```
+
+
+
+## Simulation 011 Single calibrations offset by a known value
+
+Simulating the dates:
+```{r, eval=FALSE}
+### 10000 Single calibration simulated around the mean of the calibration curve
+NSims <- 10000 ### Choose how many sims you want. Start with 10000
+target_years <- sample(CalCurve$CalBP, NSims, replace = T) ### Select some target years
+offset_magnitudes <- runif(NSims, -50, 50) ### Sim offsets
+measurement_errors <- runif(NSims, 8, 35) ### Sim accuracy
+offset_14C_ages <- c() ### Empty input folder
+  
+  ### Do the Simulated values vector
+for (i in 1:n_sims) {
+  Offset14CAges <- c(Offset14CAges, rnorm(1, mean = subset(CalCurve, CalCurve$CalBP ==    TargetYears[i])$BP + OffsetMagnitudes[i], MeasurementErrors[i]))
+  }
+  
+  Singles011Params <- data.frame(TargetYears, Offset14CAges, MeasurementErrors, OffsetMagnitudes)
+  write.csv(Singles011Params, "Singles011Params.csv")
+  
+  ### Get 4 input files to run from R
+  
+  Commands <- c("Plot(){R_Date(", rep("R_Date(", NSims - 1))
+  CloseSingles <- c(rep(");", NSims - 1), "};};")
+  Commas <- c(rep(",", NSims))
+  
+  OxCalInput <- data.frame(Commands, Singles011Params$Offset14CAges, Commas, Singles011Params$MeasurementErrors, CloseSingles)
+  names(OxCalInput) <- NULL
+  rownames(OxCalInput) <- NULL
+  
+  Singles011InputNames <- c()
+  for (i in 1:5) {
+    Singles011InputNames <- c(Singles011InputNames,
+                                      paste("C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/Sensitivity011Singles/Sinsitivity011Singles", i, ".oxcal", sep = ""))
+  }
+  
+  
+  write.table(OxCalInput[1:2000, ], file = Singles011InputNames[1], row.names = F, quote = F)
+  write.table(OxCalInput[2001:4000, ], file = Singles011InputNames[2], row.names = F, quote = F)
+  write.table(OxCalInput[4001:6000, ], file = Singles011InputNames[3], row.names = F, quote = F)
+  write.table(OxCalInput[6001:8000, ], file = Singles011InputNames[4], row.names = F, quote = F)
+  write.table(OxCalInput[8001:10000, ], file = Singles011InputNames[5], row.names = F, quote = F)
+  
+for (i in 1:5) {
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", 
+               Singles011InputNames[i]))
+  } 
+```
+
+
+Parsing the dates (the process should be streamlining the process with tidyverse and functionalization would be recommended for any further use):
+```{r, eval=FALSE}
+  Singles011RawOutputs <- read.csv("Sensitivity011RawOutputs.csv", header = F)
+
+  colnames(Singles011RawOutputs) <- c("RDate", "High68", "Low68", "Prob68", "High95", "Low95", "Prob95")
+
+  Singles011RawOutputs$RDate <- as.character(Singles011RawOutputs$RDate)
+
+  Singles011RawOutputs$RDate[2] == Singles011RawOutputs$RDate[3]
+
+  UniqueIDs <- rep(0, length(Singles011RawOutputs$RDate))
+  ID <- 1
+  for (i in 1:length(Singles011RawOutputs$RDate)) {
+    if (Singles011RawOutputs$RDate[i] != Singles011RawOutputs$RDate[2]) {
+      UniqueIDs[i] <- ID
+      ID <- ID + 1
+    }
+  }
+  UniqueIDs
+  Singles011RawOutputs <- data.frame(Singles011RawOutputs, UniqueIDs)
+
+  ## De-factorize the outputs
+
+  Singles011RawOutputs$High68 <- as.character(Singles011RawOutputs$High68)
+  Singles011RawOutputs$Low68 <- as.character(Singles011RawOutputs$Low68)
+  Singles011RawOutputs$High95 <- as.character(Singles011RawOutputs$High95)
+  Singles011RawOutputs$Low95 <- as.character(Singles011RawOutputs$Low95)
+  Singles011RawOutputs$Prob68 <- as.character(Singles011RawOutputs$Prob68)
+  Singles011RawOutputs$Prob95 <- as.character(Singles011RawOutputs$Prob95)
+
+
+  subset(Singles011RawOutputs, Low68 == "...")
+
+  for (i in 1:length(Singles011RawOutputs$RDate)) {
+    if (Singles011RawOutputs$Low68[i] == "...") {
+      Singles011RawOutputs$Low68[i] <- 0
+    }
+    if (Singles011RawOutputs$Low95[i] == "...") {
+      Singles011RawOutputs$Low95[i] <- 0
+    }
+  }
+  subset(Singles011RawOutputs, Low95 == "...")
+
+  Singles011RawOutputs$High68 <- as.numeric(Singles011RawOutputs$High68)
+  Singles011RawOutputs$Low68 <- as.numeric(Singles011RawOutputs$Low68)
+  Singles011RawOutputs$High95 <- as.numeric(Singles011RawOutputs$High95)
+  Singles011RawOutputs$Low95 <- as.numeric(Singles011RawOutputs$Low95)
+  Singles011RawOutputs$Prob68 <- as.numeric(Singles011RawOutputs$Prob68)
+  Singles011RawOutputs$Prob95 <- as.numeric(Singles011RawOutputs$Prob95)
+
+
+  for (i in 1:length(Singles011RawOutputs$Low95)) { ## Remove OxCal warnings
+    if (is.na(Singles011RawOutputs$High68[i]) & is.na(Singles011RawOutputs$Low68[i]) & is.na(Singles011RawOutputs$High95[i]) & is.na(Singles011RawOutputs$Low95[i])) {
+      Singles011RawOutputs <- Singles011RawOutputs[-i, ]
+    }
+  }
+
+  for (i in 2:length(Singles011RawOutputs$UniqueIDs)) {
+    if (Singles011RawOutputs$UniqueIDs[i] == 0) {
+      Singles011RawOutputs$UniqueIDs[i] <- Singles011RawOutputs$UniqueIDs[i - 1]
+    }
+  }
+
+  Targets <- rep(0, length(Singles011RawOutputs$UniqueIDs))
+  for (i in 1:length(Targets)) {
+    Simulation <- Singles011RawOutputs$UniqueIDs[i]
+    Targets[i] <- Singles011Params$TargetYears[Simulation]
+  }
+
+  Targets
+
+  Singles011RawOutputs$RDate <- Targets
+
+  colnames(Singles011RawOutputs)[1] <- "Target"
+
+  ## Accuracy Checks
+
+  Accuracy682S1 <- rep(0, length(Singles011RawOutputs$Target))
+  Accuracy954S1 <- rep(0, length(Singles011RawOutputs$Target)) ## Sets up empty accuracy 0,1 vectors
+  for (i in 1:length(Singles011RawOutputs$Target)) { ## Attribute accuracy for each of the ranges
+    if (!is.na(Singles011RawOutputs$High68[i])) {
+      if ((Singles011RawOutputs$High68[i] >= Singles011RawOutputs$Target[i]) & (Singles011RawOutputs$Low68[i] <= Singles011RawOutputs$Target[i])) {
+        Accuracy682S1[i] <- 1
+      }
+    }
+    if (!is.na(Singles011RawOutputs$High95[i])) {
+      if ((Singles011RawOutputs$High95[i] >= Singles011RawOutputs$Target[i]) & (Singles011RawOutputs$Low95[i] <= Singles011RawOutputs$Target[i])) {
+        Accuracy954S1[i] <- 1
+      }
+    }
+  }
+  Singles011RawOutputs <- cbind(Singles011RawOutputs, Accuracy682S1, Accuracy954S1)
+
+
+
+  Precision682S1 <- rep(0, length(Singles011RawOutputs$Target))
+  Precision954S1 <- rep(0, length(Singles011RawOutputs$Target))
+  for (i in 1:length(Singles011RawOutputs$Target)) {
+    if (is.na(Singles011RawOutputs$High68[i])) {
+      Singles011RawOutputs$High68[i] <- 0
+    }
+    if (is.na(Singles011RawOutputs$Low68[i])) {
+      Singles011RawOutputs$Low68[i] <- 0
+    }
+    if (is.na(Singles011RawOutputs$High95[i])) {
+      Singles011RawOutputs$High95[i] <- 0
+    }
+    if (is.na(Singles011RawOutputs$Low95[i])) {
+      Singles011RawOutputs$Low95[i] <- 0
+    } ## This and the preceeding 4 lines changes NAs to 0s for summing ranges
+    Precision682S1[i] <- (Singles011RawOutputs$High68[i] - Singles011RawOutputs$Low68[i])
+    Precision954S1[i] <- (Singles011RawOutputs$High95[i] - Singles011RawOutputs$Low95[i])
+  }
+  Singles011RawOutputs <- cbind(Singles011RawOutputs, Precision682S1, Precision954S1)
+
+  write.csv(Singles011RawOutputs, "Sensitivity011RawOutputs.csv") ## Save the results
+
+  ## Calculate how far error from the edge of a target boundary.
+  colnames(Singles011RawOutputs)[8] <- "Sim"
+  OffTargets011 <- OffTargetCalculator(Singles011RawOutputs)
+  colnames(Singles011RawOutputs)[8] <- "UniqueIDs"
+
+
+  Accuracy682 <- c()
+  Accuracy954 <- c()
+  for (i in 1:length(unique(Singles011RawOutputs$UniqueIDs))) {
+    Accuracy682 <- c(Accuracy682, sum(subset(Singles011RawOutputs, Singles011RawOutputs$UniqueIDs == i)$Accuracy682S1))
+    Accuracy954 <- c(Accuracy954, sum(subset(Singles011RawOutputs, Singles011RawOutputs$UniqueIDs == i)$Accuracy954S1))
+  }
+
+  Precision682 <- c()
+  Precision954 <- c()
+  for (i in 1:length(unique(Singles011RawOutputs$UniqueIDs))) {
+    Precision682 <- c(Precision682, sum(subset(Singles011RawOutputs, Singles011RawOutputs$UniqueIDs == i)$Precision682S1))
+    Precision954 <- c(Precision954, sum(subset(Singles011RawOutputs, Singles011RawOutputs$UniqueIDs == i)$Precision954S1))
+  }
+
+  Singles011Results <- data.frame(Singles011Params, Accuracy682, Accuracy954, Precision682, Precision954, OffTarget68, OffTarget95)
+  Singles011Results <- cbind(Singles011Results[, 1:8], OffTargets011)
+  write.csv(Singles011Results, "Singles011Results.csv")
+```
+
+
+
+## Simulation 012 Single calibration offset by a known value and subject to calibration curve predictive uncertainty
+
+Simulating the dates:
+```{r, eval=FALSE}
+### Produce 10000 Offset single calibrations randomized with the relevant curve uncertainty
+  
+  NSims <- 10000 ### Choose how many sims you want. Start with 5000
+  TargetYears <- sample(CalCurve$CalBP, NSims, replace = T) ### Select some target years
+  OffsetMagnitudes <- runif(NSims, -50, 50) ### Sim offsets
+  MeasurementErrors <- runif(NSims, 8, 35) ### Sim accuracy
+  Offset14CAges <- c() ### Empty input folder
+  
+  ### Do the Simulated values vector
+  for (i in 1:NSims) {
+    OffsetAge <- rnorm(1, mean = subset(CalCurve, CalCurve$CalBP == TargetYears[i])$BP + OffsetMagnitudes[i], MeasurementErrors[i])
+    OffsetAge <- rnorm(1, mean = OffsetAge, subset(CalCurve, CalCurve$CalBP == TargetYears[i])$Error)
+    Offset14CAges <- c(Offset14CAges, OffsetAge)
+  }
+  
+  Singles012Params <- data.frame(TargetYears, Offset14CAges, MeasurementErrors, OffsetMagnitudes)
+  write.csv(Singles012Params, "Singles012Params.csv")
+  
+  ### Get 4 input files to run from R
+  
+  Commands <- rep("R_Date(", NSims)
+  CloseSingles <- rep(");", NSims)
+  Commas <- c(rep(",", NSims))
+  
+  OxCalInput <- data.frame(Commands, Singles012Params$Offset14CAges, Commas, Singles012Params$MeasurementErrors, CloseSingles)
+  names(OxCalInput) <- NULL
+  rownames(OxCalInput) <- NULL
+  
+  Singles012InputNames <- c()
+  for (i in 1:5) {
+    Singles012InputNames <- c(Singles012InputNames, paste("C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/Sensitivity012Singles/Sensitivity012Singles", i, ".oxcal", sep = ""))
+  }
+  for (i in 1:5) {
+    Singles012InputNamesHome <- c(Singles012InputNamesHome, paste("C:/Users/admin/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/Sensitivity012Singles/Sensitivity012Singles", i, ".oxcal", sep = ""))
+  }
+  
+  
+  write.table(OxCalInput[1:2000, ], file = Singles012InputNames[1], row.names = F, quote = F)
+  write.table(OxCalInput[2001:4000, ], file = Singles012InputNames[2], row.names = F, quote = F)
+  write.table(OxCalInput[4001:6000, ], file = Singles012InputNames[3], row.names = F, quote = F)
+  write.table(OxCalInput[6001:8000, ], file = Singles012InputNames[4], row.names = F, quote = F)
+  write.table(OxCalInput[8001:10000, ], file = Singles012InputNames[5], row.names = F, quote = F)
+  
+  for (i in 1:5) {
+    system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", Singles012InputNames[i]))
+  }
+```
+
+
+
+Parsing the dates:
+```{r, eval= FALSE}
+Singles012RawOutputs <- read.csv("Sensitivity012RawOutputs.csv", header = F)
+  Singles012RawOutputs$V8 <- NULL
+
+  colnames(Singles012RawOutputs) <- c("RDate", "High68", "Low68", "Prob68", "High95", "Low95", "Prob95")
+
+  Singles012RawOutputs$RDate <- as.character(Singles012RawOutputs$RDate)
+
+  Singles012RawOutputs$RDate[2] == Singles012RawOutputs$RDate[3]
+
+  UniqueIDs <- rep(0, length(Singles012RawOutputs$RDate))
+  ID <- 1
+  for (i in 1:length(Singles012RawOutputs$RDate)) {
+    if (Singles012RawOutputs$RDate[i] != Singles012RawOutputs$RDate[2]) {
+      UniqueIDs[i] <- ID
+      ID <- ID + 1
+    }
+  }
+  UniqueIDs
+  Singles012RawOutputs <- data.frame(Singles012RawOutputs, UniqueIDs)
+
+  ## De-factorize the outputs
+
+  Singles012RawOutputs$High68 <- as.character(Singles012RawOutputs$High68)
+  Singles012RawOutputs$Low68 <- as.character(Singles012RawOutputs$Low68)
+  Singles012RawOutputs$High95 <- as.character(Singles012RawOutputs$High95)
+  Singles012RawOutputs$Low95 <- as.character(Singles012RawOutputs$Low95)
+  Singles012RawOutputs$Prob68 <- as.character(Singles012RawOutputs$Prob68)
+  Singles012RawOutputs$Prob95 <- as.character(Singles012RawOutputs$Prob95)
+
+
+  subset(Singles012RawOutputs, Low68 == "...")
+
+  for (i in 1:length(Singles012RawOutputs$RDate)) {
+    if (Singles012RawOutputs$Low68[i] == "...") {
+      Singles012RawOutputs$Low68[i] <- 0
+    }
+    if (Singles012RawOutputs$Low95[i] == "...") {
+      Singles012RawOutputs$Low95[i] <- 0
+    }
+  }
+  subset(Singles012RawOutputs, Low95 == "...")
+
+  Singles012RawOutputs$High68 <- as.numeric(Singles012RawOutputs$High68)
+  Singles012RawOutputs$Low68 <- as.numeric(Singles012RawOutputs$Low68)
+  Singles012RawOutputs$High95 <- as.numeric(Singles012RawOutputs$High95)
+  Singles012RawOutputs$Low95 <- as.numeric(Singles012RawOutputs$Low95)
+  Singles012RawOutputs$Prob68 <- as.numeric(Singles012RawOutputs$Prob68)
+  Singles012RawOutputs$Prob95 <- as.numeric(Singles012RawOutputs$Prob95)
+
+
+  for (i in 1:length(Singles012RawOutputs$Low95)) { ## Remove OxCal warnings
+    if (is.na(Singles012RawOutputs$High68[i]) & is.na(Singles012RawOutputs$Low68[i]) & is.na(Singles012RawOutputs$High95[i]) & is.na(Singles012RawOutputs$Low95[i])) {
+      Singles012RawOutputs <- Singles012RawOutputs[-i, ]
+    }
+  }
+
+  for (i in 2:length(Singles012RawOutputs$UniqueIDs)) {
+    if (Singles012RawOutputs$UniqueIDs[i] == 0) {
+      Singles012RawOutputs$UniqueIDs[i] <- Singles012RawOutputs$UniqueIDs[i - 1]
+    }
+  }
+
+  Targets <- rep(0, length(Singles012RawOutputs$UniqueIDs))
+  for (i in 1:length(Targets)) {
+    Simulation <- Singles012RawOutputs$UniqueIDs[i]
+    Targets[i] <- Singles012Params$TargetYears[Simulation]
+  }
+
+  Targets
+
+  Singles012RawOutputs$RDate <- Targets
+
+  colnames(Singles012RawOutputs)[1] <- "Target"
+
+  ## Accuracy Checks
+
+  Accuracy682S1 <- rep(0, length(Singles012RawOutputs$Target))
+  Accuracy954S1 <- rep(0, length(Singles012RawOutputs$Target)) ## Sets up empty accuracy 0,1 vectors
+  for (i in 1:length(Singles012RawOutputs$Target)) { ## Attribute accuracy for each of the ranges
+    if (!is.na(Singles012RawOutputs$High68[i])) {
+      if ((Singles012RawOutputs$High68[i] >= Singles012RawOutputs$Target[i]) & (Singles012RawOutputs$Low68[i] <= Singles012RawOutputs$Target[i])) {
+        Accuracy682S1[i] <- 1
+      }
+    }
+    if (!is.na(Singles012RawOutputs$High95[i])) {
+      if ((Singles012RawOutputs$High95[i] >= Singles012RawOutputs$Target[i]) & (Singles012RawOutputs$Low95[i] <= Singles012RawOutputs$Target[i])) {
+        Accuracy954S1[i] <- 1
+      }
+    }
+  }
+  Singles012RawOutputs <- cbind(Singles012RawOutputs, Accuracy682S1, Accuracy954S1)
+
+
+
+  Precision682S1 <- rep(0, length(Singles012RawOutputs$Target))
+  Precision954S1 <- rep(0, length(Singles012RawOutputs$Target))
+  for (i in 1:length(Singles012RawOutputs$Target)) {
+    if (is.na(Singles012RawOutputs$High68[i])) {
+      Singles012RawOutputs$High68[i] <- 0
+    }
+    if (is.na(Singles012RawOutputs$Low68[i])) {
+      Singles012RawOutputs$Low68[i] <- 0
+    }
+    if (is.na(Singles012RawOutputs$High95[i])) {
+      Singles012RawOutputs$High95[i] <- 0
+    }
+    if (is.na(Singles012RawOutputs$Low95[i])) {
+      Singles012RawOutputs$Low95[i] <- 0
+    } ## This and the preceeding 4 lines changes NAs to 0s for summing ranges
+    Precision682S1[i] <- (Singles012RawOutputs$High68[i] - Singles012RawOutputs$Low68[i])
+    Precision954S1[i] <- (Singles012RawOutputs$High95[i] - Singles012RawOutputs$Low95[i])
+  }
+  Singles012RawOutputs <- cbind(Singles012RawOutputs, Precision682S1, Precision954S1)
+
+
+
+
+
+
+  write.csv(Singles012RawOutputs, "Sensitivity012RawOutputs.csv") ## Save the results
+
+  ## Calculate how far error from the edge of a target boundary.
+  OffTarget68 <- rep(NA, length(unique(Singles012RawOutputs$UniqueIDs)))
+  OffTarget95 <- rep(NA, length(unique(Singles012RawOutputs$UniqueIDs)))
+
+  for (i in 1:length(unique(Singles012RawOutputs$UniqueIDs))) {
+    CheckedSimulation <- subset(Singles012RawOutputs, UniqueIDs == i)
+    if (sum(CheckedSimulation$Accuracy682S1) == 0) {
+      OffTarget68[i] <- min(abs(c(CheckedSimulation$High68, CheckedSimulation$Low68) - CheckedSimulation$Target[1]))
+    }
+    if (sum(CheckedSimulation$Accuracy954S1) == 0) {
+      OffTarget95[i] <- min(abs(c(CheckedSimulation$High95, CheckedSimulation$Low95) - CheckedSimulation$Target[1]))
+    }
+  }
+
+
+
+  Accuracy682 <- c()
+  Accuracy954 <- c()
+  for (i in 1:length(unique(Singles012RawOutputs$UniqueIDs))) {
+    Accuracy682 <- c(Accuracy682, sum(subset(Singles012RawOutputs, Singles012RawOutputs$UniqueIDs == i)$Accuracy682S1))
+    Accuracy954 <- c(Accuracy954, sum(subset(Singles012RawOutputs, Singles012RawOutputs$UniqueIDs == i)$Accuracy954S1))
+  }
+
+  Precision682 <- c()
+  Precision954 <- c()
+  for (i in 1:length(unique(Singles012RawOutputs$UniqueIDs))) {
+    Precision682 <- c(Precision682, sum(subset(Singles012RawOutputs, Singles012RawOutputs$UniqueIDs == i)$Precision682S1))
+    Precision954 <- c(Precision954, sum(subset(Singles012RawOutputs, Singles012RawOutputs$UniqueIDs == i)$Precision954S1))
+  }
+
+  Singles012Results <- data.frame(Singles012Params, Accuracy682, Accuracy954, Precision682, Precision954, OffTarget68, OffTarget95)
+
+  write.csv(Singles012Results, "Singles012Results.csv")
+```
+
+
+
+
+## Simulation 013 Single calibrations simulated in OxCal, offset by a known value and re-calibrated
+
+Simulating the dates:
+```{r, eval= FALSE}
+### 10000 Single determinations simulated in OxCal, offset, and re-calibrated with OxCal
+  
+  NSims <- 10000 ### Choose how many sims you want. Start with 10000
+  TargetYears <- sample(CalCurve$CalBP, NSims, replace = T) ### Select some target years
+  OffsetMagnitudes <- runif(NSims, -50, 50) ### Sim offsets
+  MeasurementErrors <- runif(NSims, 8, 35) ### Sim accuracy
+  
+  
+  Commands <- rep("R_Simulate(", NSims)
+  CloseSingles <- rep(");", NSims)
+  Commas <- c(rep(",", NSims))
+  
+  OxCalInput <- data.frame(Commands, 1950 - TargetYears, Commas, MeasurementErrors, CloseSingles)
+  names(OxCalInput) <- NULL
+  rownames(OxCalInput) <- NULL
+  
+  Singles013Params <- data.frame(TargetYears, Offset14CAges, MeasurementErrors, OffsetMagnitudes)
+  write.csv(Singles013Params, "Singles013Params.csv")
+  
+  Singles013InputNames <- c()
+  for (i in 1:5) {
+    Singles013InputNames <- c(Singles013InputNames, paste("C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/Sensitivity013Singles/Sensitivity013Singles", i, ".oxcal", sep = ""))
+  }
+  
+  write.table(OxCalInput[1:2000, ], file = Singles013InputNames[1], row.names = F, quote = F)
+  write.table(OxCalInput[2001:4000, ], file = Singles013InputNames[2], row.names = F, quote = F)
+  write.table(OxCalInput[4001:6000, ], file = Singles013InputNames[3], row.names = F, quote = F)
+  write.table(OxCalInput[6001:8000, ], file = Singles013InputNames[4], row.names = F, quote = F)
+  write.table(OxCalInput[8001:10000, ], file = Singles013InputNames[5], row.names = F, quote = F)
+  
+  for (i in 1:5) {
+    system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", Singles013InputNames[i]))
+  }
+  
+  ## Get the BP Values back in
+  
+  OxCalSimMeasures <- read.csv("Singles013OxCal.csv", header = F)
+  
+  OxCalSimMeasures <- na.rm(OxCalSimMeasures$V1)
+  
+  Commands <- rep("R_Date(", NSims)
+  CloseSingles <- rep(");", NSims)
+  Commas <- c(rep(",", NSims))
+  
+  OxCalInput <- data.frame(Commands, OxCalSimMeasures$V1 + Singles013Params$OffsetMagnitudes, Commas, Singles013Params$MeasurementErrors, CloseSingles)
+  names(OxCalInput) <- NULL
+  rownames(OxCalInput) <- NULL
+  
+  Singles013InputNames <- c()
+  for (i in 1:5) {
+    Singles013InputNames <- c(Singles013InputNames, paste("C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/Sensitivity013Singles/Sensitivity013SinglesOffset", i, ".oxcal", sep = ""))
+  }
+  
+  write.table(OxCalInput[1:2000, ], file = Singles013InputNames[1], row.names = F, quote = F)
+  write.table(OxCalInput[2001:4000, ], file = Singles013InputNames[2], row.names = F, quote = F)
+  write.table(OxCalInput[4001:6000, ], file = Singles013InputNames[3], row.names = F, quote = F)
+  write.table(OxCalInput[6001:8000, ], file = Singles013InputNames[4], row.names = F, quote = F)
+  write.table(OxCalInput[8001:10000, ], file = Singles013InputNames[5], row.names = F, quote = F)
+  
+  for (i in 1:5) {
+    system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", Singles013InputNames[i]))
+  }
+```
+
+
+
+Parsing the dates:
+```{r, eval= FALSE}
+  Singles013RawOutputs <- read.csv("Sensitivity013RawOutputs.csv", header = F)
+  Singles013RawOutputs$V2 <- NULL
+  Singles013RawOutputs$V9 <- NULL
+  colnames(Singles013RawOutputs) <- c("RDate", "High68", "Low68", "Prob68", "High95", "Low95", "Prob95")
+
+  Singles013RawOutputs$RDate <- as.character(Singles013RawOutputs$RDate)
+
+
+
+  UniqueIDs <- rep(0, length(Singles013RawOutputs$RDate))
+  ID <- 1
+  for (i in 1:length(Singles013RawOutputs$RDate)) {
+    if (Singles013RawOutputs$RDate[i] != Singles013RawOutputs$RDate[2]) {
+      UniqueIDs[i] <- ID
+      ID <- ID + 1
+    }
+  }
+  UniqueIDs
+  Singles013RawOutputs <- data.frame(Singles013RawOutputs, UniqueIDs)
+
+  ## De-factorize the outputs
+
+  Singles013RawOutputs$High68 <- as.character(Singles013RawOutputs$High68)
+  Singles013RawOutputs$Low68 <- as.character(Singles013RawOutputs$Low68)
+  Singles013RawOutputs$High95 <- as.character(Singles013RawOutputs$High95)
+  Singles013RawOutputs$Low95 <- as.character(Singles013RawOutputs$Low95)
+  Singles013RawOutputs$Prob68 <- as.character(Singles013RawOutputs$Prob68)
+  Singles013RawOutputs$Prob95 <- as.character(Singles013RawOutputs$Prob95)
+
+
+  subset(Singles013RawOutputs, Low68 == "...")
+
+  for (i in 1:length(Singles013RawOutputs$RDate)) {
+    if (Singles013RawOutputs$Low68[i] == "...") {
+      Singles013RawOutputs$Low68[i] <- 0
+    }
+    if (Singles013RawOutputs$Low95[i] == "...") {
+      Singles013RawOutputs$Low95[i] <- 0
+    }
+  }
+  subset(Singles013RawOutputs, Low95 == "...")
+
+  Singles013RawOutputs$High68 <- as.numeric(Singles013RawOutputs$High68)
+  Singles013RawOutputs$Low68 <- as.numeric(Singles013RawOutputs$Low68)
+  Singles013RawOutputs$High95 <- as.numeric(Singles013RawOutputs$High95)
+  Singles013RawOutputs$Low95 <- as.numeric(Singles013RawOutputs$Low95)
+  Singles013RawOutputs$Prob68 <- as.numeric(Singles013RawOutputs$Prob68)
+  Singles013RawOutputs$Prob95 <- as.numeric(Singles013RawOutputs$Prob95)
+
+
+  for (i in 1:length(Singles013RawOutputs$Low95)) { ## Remove OxCal warnings
+    if (is.na(Singles013RawOutputs$High68[i]) & is.na(Singles013RawOutputs$Low68[i]) & is.na(Singles013RawOutputs$High95[i]) & is.na(Singles013RawOutputs$Low95[i])) {
+      Singles013RawOutputs <- Singles013RawOutputs[-i, ]
+    }
+  }
+
+  for (i in 2:length(Singles013RawOutputs$UniqueIDs)) {
+    if (Singles013RawOutputs$UniqueIDs[i] == 0) {
+      Singles013RawOutputs$UniqueIDs[i] <- Singles013RawOutputs$UniqueIDs[i - 1]
+    }
+  }
+
+  Targets <- rep(0, length(Singles013RawOutputs$UniqueIDs))
+  for (i in 1:length(Targets)) {
+    Simulation <- Singles013RawOutputs$UniqueIDs[i]
+    Targets[i] <- Singles013Params$TargetYears[Simulation]
+  }
+
+  Targets
+
+  Singles013RawOutputs$RDate <- Targets
+
+  colnames(Singles013RawOutputs)[1] <- "Target"
+
+  ## Accuracy Checks
+
+  Accuracy682S1 <- rep(0, length(Singles013RawOutputs$Target))
+  Accuracy954S1 <- rep(0, length(Singles013RawOutputs$Target)) ## Sets up empty accuracy 0,1 vectors
+  for (i in 1:length(Singles013RawOutputs$Target)) { ## Attribute accuracy for each of the ranges
+    if (!is.na(Singles013RawOutputs$High68[i])) {
+      if ((Singles013RawOutputs$High68[i] >= Singles013RawOutputs$Target[i]) & (Singles013RawOutputs$Low68[i] <= Singles013RawOutputs$Target[i])) {
+        Accuracy682S1[i] <- 1
+      }
+    }
+    if (!is.na(Singles013RawOutputs$High95[i])) {
+      if ((Singles013RawOutputs$High95[i] >= Singles013RawOutputs$Target[i]) & (Singles013RawOutputs$Low95[i] <= Singles013RawOutputs$Target[i])) {
+        Accuracy954S1[i] <- 1
+      }
+    }
+  }
+  Singles013RawOutputs <- cbind(Singles013RawOutputs, Accuracy682S1, Accuracy954S1)
+
+
+
+  Precision682S1 <- rep(0, length(Singles013RawOutputs$Target))
+  Precision954S1 <- rep(0, length(Singles013RawOutputs$Target))
+  for (i in 1:length(Singles013RawOutputs$Target)) {
+    if (is.na(Singles013RawOutputs$High68[i])) {
+      Singles013RawOutputs$High68[i] <- 0
+    }
+    if (is.na(Singles013RawOutputs$Low68[i])) {
+      Singles013RawOutputs$Low68[i] <- 0
+    }
+    if (is.na(Singles013RawOutputs$High95[i])) {
+      Singles013RawOutputs$High95[i] <- 0
+    }
+    if (is.na(Singles013RawOutputs$Low95[i])) {
+      Singles013RawOutputs$Low95[i] <- 0
+    } ## This and the preceeding 4 lines changes NAs to 0s for summing ranges
+    Precision682S1[i] <- (Singles013RawOutputs$High68[i] - Singles013RawOutputs$Low68[i])
+    Precision954S1[i] <- (Singles013RawOutputs$High95[i] - Singles013RawOutputs$Low95[i])
+  }
+  Singles013RawOutputs <- cbind(Singles013RawOutputs, Precision682S1, Precision954S1)
+
+
+
+
+
+
+  write.csv(Singles013RawOutputs, "Sensitivity013RawOutputs.csv") ## Save the results
+
+  ## Calculate how far error from the edge of a target boundary.
+  OffTarget68 <- rep(NA, length(unique(Singles013RawOutputs$UniqueIDs)))
+  OffTarget95 <- rep(NA, length(unique(Singles013RawOutputs$UniqueIDs)))
+
+  for (i in 1:length(unique(Singles013RawOutputs$UniqueIDs))) {
+    CheckedSimulation <- subset(Singles013RawOutputs, UniqueIDs == i)
+    if (sum(CheckedSimulation$Accuracy682S1) == 0) {
+      OffTarget68[i] <- min(abs(c(CheckedSimulation$High68, CheckedSimulation$Low68) - CheckedSimulation$Target[1]))
+    }
+    if (sum(CheckedSimulation$Accuracy954S1) == 0) {
+      OffTarget95[i] <- min(abs(c(CheckedSimulation$High95, CheckedSimulation$Low95) - CheckedSimulation$Target[1]))
+    }
+  }
+
+
+
+  Accuracy682 <- c()
+  Accuracy954 <- c()
+  for (i in 1:length(unique(Singles013RawOutputs$UniqueIDs))) {
+    Accuracy682 <- c(Accuracy682, sum(subset(Singles013RawOutputs, Singles013RawOutputs$UniqueIDs == i)$Accuracy682S1))
+    Accuracy954 <- c(Accuracy954, sum(subset(Singles013RawOutputs, Singles013RawOutputs$UniqueIDs == i)$Accuracy954S1))
+  }
+
+  Precision682 <- c()
+  Precision954 <- c()
+  for (i in 1:length(unique(Singles013RawOutputs$UniqueIDs))) {
+    Precision682 <- c(Precision682, sum(subset(Singles013RawOutputs, Singles013RawOutputs$UniqueIDs == i)$Precision682S1))
+    Precision954 <- c(Precision954, sum(subset(Singles013RawOutputs, Singles013RawOutputs$UniqueIDs == i)$Precision954S1))
+  }
+
+  Singles013Results <- data.frame(Singles013Params, Accuracy682, Accuracy954, Precision682, Precision954, OffTarget68, OffTarget95)
+  colnames(Singles013RawOutputs)[8] <- "Sim"
+  Singles013Results <- cbind(Singles013Results[, 1:8], OffTargetCalculator(Singles013RawOutputs))
+
+  write.csv(Singles013Results, "Singles013Results.csv")
+```
+
+
+
+
+
+## Comparing Simulation 012 and 013 results 
+
+We can assess the comparability of our simulation algorithms to those used by OxCal by evaluating thwehter the results of the Simulations 012 and 013 are comparable. This is done in two steps:
+
+1. Plotting of the raw results by offset magnitude and measurement error.
+2. Building logistic regression models and comparing the parameters.
+
+If the two simulation methods are equivalent the different visualizations and model outputs should be comparable.
+
+```{r}
+# load the simulation outcomes
+library(tidyverse)
+singles_012_results <- read_csv("Singles012Results.csv")
+singles_013_results <- read_csv("Singles013Results.csv")
+
+```
+
+
+```{r}
+# visualization: by offset magnitude
+singles_012_offset_binned <- singles_012_results %>%
+  mutate(OffsetMagnitudes  = round(OffsetMagnitudes)) %>%
+  group_by(OffsetMagnitudes) %>%
+  summarize(accuracy_68  = mean(Accuracy682),
+            accuracy_95  = mean(Accuracy954))
+
+singles_013_offset_binned <- singles_013_results %>%
+  mutate(OffsetMagnitudes  = round(OffsetMagnitudes)) %>%
+  group_by(OffsetMagnitudes) %>%
+  summarize(accuracy_68  = mean(Accuracy682),
+            accuracy_95  = mean(Accuracy954))
+
+
+singles_012_offset_binned %>%
+  ggplot(aes(x = OffsetMagnitudes)) +
+  geom_point(aes(y = accuracy_68), color = "steelblue") + 
+  geom_point(aes(y = accuracy_95), color = "steelblue") +
+  geom_point(
+    data = singles_013_offset_binned,
+    aes(
+      x = OffsetMagnitudes,
+      y = accuracy_68), color = "darkgreen") +
+    geom_point(
+    data = singles_013_offset_binned,
+    aes(
+      x = OffsetMagnitudes,
+      y = accuracy_95), color = "darkgreen") +
+  ylim(c(0,1)) +
+  ylab("accuracy") +
+  theme_bw()
+
+  
+
+
+```
+```{r}
+# visualization: by measurement error
+singles_012_error_binned <- singles_012_results %>%
+  mutate(MeasurementErrors  = round(MeasurementErrors)) %>%
+  group_by(MeasurementErrors) %>%
+  summarize(accuracy_68  = mean(Accuracy682),
+            accuracy_95  = mean(Accuracy954))
+
+singles_013_error_binned <- singles_013_results %>%
+  mutate(MeasurementErrors  = round(MeasurementErrors)) %>%
+  group_by(MeasurementErrors) %>%
+  summarize(accuracy_68  = mean(Accuracy682),
+            accuracy_95  = mean(Accuracy954))
+
+
+singles_012_error_binned %>%
+  ggplot(aes(x = MeasurementErrors)) +
+  geom_point(aes(y = accuracy_68), color = "steelblue") + 
+  geom_point(aes(y = accuracy_95), color = "steelblue") +
+  geom_point(
+    data = singles_013_error_binned,
+    aes(
+      x = MeasurementErrors,
+      y = accuracy_68), color = "darkgreen") +
+    geom_point(
+    data = singles_013_error_binned,
+    aes(
+      x = MeasurementErrors,
+      y = accuracy_95), color = "darkgreen") +
+  ylim(c(0,1)) +
+  ylab("accuracy") +
+  theme_bw()
+
+
+```
+Overall, there are no stark differences between the two simulation approaches as far as the visual comparison of model outcomes is concerned.
+
+```{r}
+# compare model outputs
+# first: combine the dfs into one large nested data frame. This will is divided by simulation and offset direction (positive or negative).
+# second: apply the logistic model regressing on offset magnitude, measurement error and the interaction of the two.
+# third: use broom::tidy() to extract the parameters.
+# fourth: plot the resulting estimates with thheir standard deviations
+library(broom)
+library(purrr)
+
+# nest the data
+singles_012_results <- singles_012_results %>%
+  mutate(simulation = "sim_012")
+singles_013_results <- singles_013_results %>%
+  mutate(simulation = "sim_013")
+
+singles_012_013_nested <- bind_rows(singles_012_results, singles_013_results) %>%
+  mutate(offset_direction = if_else(OffsetMagnitudes > 0, "positive", "negative")) %>%
+  pivot_longer(
+    cols = c(Accuracy682, Accuracy954),
+    values_to = "accuracy",
+    names_to = "hpd_area") %>%
+  mutate(
+    sim_offset_hpd = str_c(simulation, offset_direction, hpd_area, sep = "_")
+  )%>%
+  select(-simulation, -offset_direction, -hpd_area) %>%
+  group_by(sim_offset_hpd) %>%
+  nest()
+
+
+# fit the logistic model and extract the parameters
+
+singles_012_013_nested <- singles_012_013_nested %>%
+  mutate(glm = map(.x = data,
+                   .f = ~glm(accuracy ~ 
+                               OffsetMagnitudes + MeasurementErrors +
+                               OffsetMagnitudes * MeasurementErrors,
+                             family = binomial,
+                             data = .))) %>%
+  mutate(tidy_glm  = map(.x = glm,
+                         .f = tidy))
+
+singles_012_013_coefs <- singles_012_013_nested %>%
+  select(-data, -glm) %>%
+  unnest(cols = tidy_glm) %>%
+  mutate(sim_offset_hpd = as_factor(sim_offset_hpd))
+
+singles_012_013_coefs %>%
+  ggplot(aes(
+    x = sim_offset_hpd,
+    y = estimate
+  )) +
+  geom_point() +
+  geom_errorbar(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error), width = 0.05) +
+  facet_wrap(~term, scales = "free") +
+  coord_flip() +
+  theme_bw()
+    
+print(singles_012_013_coefs)
+
+singles_012_013_nested$sim_offset_hpd
+#Evaluate different predictions
+glm_predicted_input <- data.frame(
+  offset_magnitudes = rep(seq(-1,-50, by = -1), 4),
+  measurement_errors = c(rep(8, 50), rep(16, 50), rep(24, 50), rep(32, 50))
+) %>%
+  mutate(
+    predict_012 = 1/(1+exp(-(singles_012_013_coefs$estimate[9] +
+                               singles_012_013_coefs$estimate[10] * offset_magnitudes +
+                               singles_012_013_coefs$estimate[11] * measurement_errors +
+                               singles_012_013_coefs$estimate[12] * measurement_errors * offset_magnitudes))),
+    predict_013 = 1/(1+exp(-(singles_012_013_coefs$estimate[17] +
+                               singles_012_013_coefs$estimate[18] * offset_magnitudes +
+                               singles_012_013_coefs$estimate[19] * measurement_errors +
+                               singles_012_013_coefs$estimate[20] * measurement_errors * offset_magnitudes)))
+  )
+
+glm_predicted_input %>%
+  ggplot(aes(x = offset_magnitudes)) +
+  geom_line(aes(y = predict_012), color = "steelblue") +
+  geom_line(aes(y = predict_013), color = "darkgreen") +
+  facet_wrap(~measurement_errors) +
+  theme_bw()
+
+```
+The results indicate a high degree of similarity between simulations offset towards older ages (positive offsets, i.e. more 14C years). The match is poorer for offsets towards younger ages (negative offsets, i.e. fewer 14C years). The differences are manifest for the smaller measurement errors and are relatively small. Nevertheless, this topic will warrant further exploration.
+
+Overall, except for the fine details of the negative offsets the simulation approach used here reproduces OxCal results well.
