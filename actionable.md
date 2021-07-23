@@ -2,7 +2,6 @@ This file contains the list of tasks for this repo to be carried out in the imme
 * Load the results files
 * Standardize naming and load the simulation parameters. ensure_lower_formatting of names, consistent across simulation files.
 * README.md work:
-  - Provide a link to a shared Dropbox folder with individual simulation outcomes.
   - Add a figure before table of contents demonstrating the kinds of outputs delivered by the project. To be replaced by .gif of Shiny in due course
   - (Once ready) - set up the link to the blog with more detailed description of why and how and what.
   - (Once ready) - Shiny app link

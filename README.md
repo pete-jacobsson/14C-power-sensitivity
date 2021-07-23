@@ -44,12 +44,11 @@ This project aims to provide the radiocarbon community with tools for power and 
 5. The long-term objective is to package the relevant functions to provide a straightforward means of power and sensitivity analysis for the 14C community.
 
 ## Outcomes
-Project simulations: 467,500/473,500+ completed <To be provided via a read-only dropbox link>.
-Project simulation results: <Add to the folder here> (FIGURE)
+Project simulations: 467,500/473,500+ completed <accessible at: https://www.dropbox.com/sh/ktkflq0ilv4brhb/AACkCa9xwTkoahj2qYuU8MMPa?dl=0>.
 EDA: ongoing
 MPE analysis: ongoing
 Modelling: ongoing
-Shiny Package: ongoing
+Shiny App: ongoing
 Packaging: ongoing.
 
 
