@@ -9,24 +9,55 @@ shinyUI(
                tabPanel(title = "Single Calibrations 011",
                         sidebarLayout(
                           sidebarPanel(
-                            "String inside sidebar",
+                            "",
                             #Select axes---------------------------------------
-                            varSelectInput(
+                            radioButtons(
                               inputId = "x_axis_text_011",
-                              label = "Choose a column from the data",
-                              data = singles_011_results
+                              label = "Choose variable:",
+                              choices = list("Offset Magfnitude" = "offset_magnitude",
+                                             "Measurement Error" = "measurement_error",
+                                             "Target Date" = "target_year"),
+                              selected = 1
                             ),
-                            varSelectInput(
+                            radioButtons(
                               inputId = "y_axis_text_011",
-                              label = "Choose a column from the data",
-                              data = singles_011_results
+                              label = "Choose HPD Area",
+                              choices = list("68% HPD Area" = "accuracy_68",
+                                             "95% HPD Area" = "accuracy_95"),
+                              selected = 1
+                            ),
+                            #Set up sliders------------------------------------
+                            sliderInput(
+                              inputId = "offset_magnitude_011",
+                              label = "Offset Magnitude (14C yrs)",
+                              min = -50,
+                              max = 50,
+                              value = c(-50, 50)),
+                            sliderInput(
+                              inputId = "measurement_error_011",
+                              label = expression(paste0("Measurement Error (14C yrs 1", sigma, ")")),
+                              min = 8,
+                              max = 32,
+                              value = c(8, 32)
+                            ),
+                            sliderInput(
+                              inputId = "target_year_011",
+                              label = "Target year (cal BP)",
+                              min = 0, 
+                              max = 12310,
+                              value = c(0, 12310)
                             )
-                            #Set up sliders
+                            
+                            
                             
                             ),
+                          #Main panel------------------------------------------
                           mainPanel(
                             textOutput("x_axis_text_011"),
-                            textOutput("y_axis_text_011"))
+                            textOutput("y_axis_text_011"),
+                            verbatimTextOutput("offset_magnitude_011"),
+                            verbatimTextOutput("measurement_error_011"),
+                            verbatimTextOutput("target_year_011"))
                         )
                         ),
 #WMDs021 EDA-------------------------------------------------------------------
