@@ -12,19 +12,19 @@ shinyUI(
                             "",
                             #Select axes---------------------------------------
                             radioButtons(
-                              inputId = "x_axis_text_011",
+                              inputId = "x_axis_011",
                               label = "Choose variable:",
-                              choices = list("Offset Magfnitude" = "offset_magnitude",
-                                             "Measurement Error" = "measurement_error",
-                                             "Target Date" = "target_year"),
-                              selected = "offset_magnitude"
+                              choices = list("Offset Magfnitude" = 1,
+                                             "Measurement Error" = 2,
+                                             "Target Date" = 3),
+                              selected = 1
                             ),
                             radioButtons(
-                              inputId = "y_axis_text_011",
+                              inputId = "y_axis_011",
                               label = "Choose HPD Area",
-                              choices = list("68% HPD Area" = "accuracy_68",
-                                             "95% HPD Area" = "accuracy_95"),
-                              selected = "accuracy_68"
+                              choices = list("68% HPD Area" = 1,
+                                             "95% HPD Area" = 2),
+                              selected = 1
                             ),
                             #Set up sliders------------------------------------
                             sliderInput(
@@ -55,7 +55,7 @@ shinyUI(
                             verbatimTextOutput("offset_magnitude_011"),
                             verbatimTextOutput("measurement_error_011"),
                             verbatimTextOutput("target_year_011"),
-                            plotOutput("plotting_table_011"))
+                            tableOutput("plotting_table_011"))
                         )
                         ),
 #WMDs021 EDA-------------------------------------------------------------------
