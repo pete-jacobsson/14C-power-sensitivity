@@ -17,14 +17,14 @@ shinyUI(
                               choices = list("Offset Magfnitude" = "offset_magnitude",
                                              "Measurement Error" = "measurement_error",
                                              "Target Date" = "target_year"),
-                              selected = 1
+                              selected = "offset_magnitude"
                             ),
                             radioButtons(
                               inputId = "y_axis_text_011",
                               label = "Choose HPD Area",
                               choices = list("68% HPD Area" = "accuracy_68",
                                              "95% HPD Area" = "accuracy_95"),
-                              selected = 1
+                              selected = "accuracy_68"
                             ),
                             #Set up sliders------------------------------------
                             sliderInput(
@@ -35,7 +35,7 @@ shinyUI(
                               value = c(-50, 50)),
                             sliderInput(
                               inputId = "measurement_error_011",
-                              label = expression(paste0("Measurement Error (14C yrs 1", sigma, ")")),
+                              label = "Measurement Error (14C yrs 1-s)",
                               min = 8,
                               max = 32,
                               value = c(8, 32)
@@ -47,9 +47,6 @@ shinyUI(
                               max = 12310,
                               value = c(0, 12310)
                             )
-                            
-                            
-                            
                             ),
                           #Main panel------------------------------------------
                           mainPanel(
@@ -57,7 +54,8 @@ shinyUI(
                             textOutput("y_axis_text_011"),
                             verbatimTextOutput("offset_magnitude_011"),
                             verbatimTextOutput("measurement_error_011"),
-                            verbatimTextOutput("target_year_011"))
+                            verbatimTextOutput("target_year_011"),
+                            plotOutput("plotting_table_011"))
                         )
                         ),
 #WMDs021 EDA-------------------------------------------------------------------

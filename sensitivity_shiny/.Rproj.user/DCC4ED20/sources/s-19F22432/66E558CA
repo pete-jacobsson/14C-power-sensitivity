@@ -3,22 +3,22 @@
     "path": "C:/Users/Pete.C14/Dropbox/15_Github_repos/14C-power-sensitivity/sensitivity_shiny/ui.R",
     "project_path": "ui.R",
     "type": "r_source",
-    "hash": "233287793",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1628155066419.0,
     "source_on_save": false,
     "relative_order": 1,
     "properties": {
-        "cursorPosition": "59,63",
-        "scrollLine": "45"
+        "cursorPosition": "104,1",
+        "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1628162332,
+    "lastKnownWriteTime": 1628168483,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1628162332746,
+    "last_content_update": 1628168483897,
     "read_only": false,
     "read_only_alternatives": []
 }
