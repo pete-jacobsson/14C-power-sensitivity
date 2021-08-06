@@ -11,20 +11,15 @@ shinyUI(
                           sidebarPanel(
                             "",
                             #Select axes---------------------------------------
-                            radioButtons(
+                            selectInput(
                               inputId = "x_axis_011",
                               label = "Choose variable:",
-                              choices = list("Offset Magfnitude" = 1,
-                                             "Measurement Error" = 2,
-                                             "Target Date" = 3),
-                              selected = 1
+                              choices = names(singles_011_results[,c(1, 3, 4)])
                             ),
-                            radioButtons(
+                            selectInput(
                               inputId = "y_axis_011",
-                              label = "Choose HPD Area",
-                              choices = list("68% HPD Area" = 1,
-                                             "95% HPD Area" = 2),
-                              selected = 1
+                              label = "Choose variable:",
+                              choices = names(singles_011_results[,c(5, 6, 9, 10)])
                             ),
                             #Set up sliders------------------------------------
                             sliderInput(
@@ -50,8 +45,6 @@ shinyUI(
                             ),
                           #Main panel------------------------------------------
                           mainPanel(
-                            textOutput("x_axis_text_011"),
-                            textOutput("y_axis_text_011"),
                             verbatimTextOutput("offset_magnitude_011"),
                             verbatimTextOutput("measurement_error_011"),
                             verbatimTextOutput("target_year_011"),

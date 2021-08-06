@@ -13,7 +13,7 @@ oxcal_dir <- "C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_Sen
 # wmds_025_names <- str_c(oxcal_dir, "Sensitivity025WMDs/Sensitivity025WMDs", 1:300000)
 # seqs_031_names <- str_c(oxcal_dir, "Sensitivity031Seqs/Sensitivity031Seqs", 1:30000)
 # seqs_032_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:2500)
-# seqs_033_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:6000)
+# seqs_033_names <- str_c(oxcal_dir, "Sensitivity033Seqs/Sensitivity033Seqs", 1:6000)
 
 # Load the simulation parameters-----------------------------------------------
 # wmds_021_params <- read_csv("wmds_021_params.csv") %>%
@@ -119,6 +119,6 @@ oxcal_dir <- "C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_Sen
 # seqs_032_results <- assemble_results(seqs_032_names, seqs_032_params, model_type = "seq")#A bug somewhere here. Find it.
 # write.csv(seqs_032_results, "seqs_032_results.csv")
 
-# seqs_032_results <- assemble_results(seqs_033_names, seqs_033_params, model_type = "seq")#A bug somewhere here. Find it.
+# seqs_033_results <- assemble_results(seqs_033_names, seqs_033_params, model_type = "seq")#A bug somewhere here. Find it.
 # write.csv(seqs_033_results, "seqs_033_results.csv")
 

@@ -32,12 +32,12 @@ shinyServer(function(input, output) {
       )
     #Group on the desired parameter
       sim_results_grouped <- sim_results_filtered %>%
-        group_by(colnames(singles_011_results)[input$x_axis_text_011]) %>%
-        summarize(
-          ratio_68_accurate = sum(accuracy_68)/n(),
-          ratio_95_accurate = sum(accuracy_95)/n()
+        group_by(offset_magnitude) %>%
+        summarise(
+          ratio_68 = mean(accuracy_68),
+          ratio_95 = mean(accuracy_95)
         )
-    head(sim_results_grouped, 10)
+    #head(sim_results_filtered, 10)
 
 
     
