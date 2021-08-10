@@ -73,17 +73,25 @@ shinyServer(function(input, output) {
           select(-hpd_area)
       }
       
-      #Step 4: set up the names for the x-axis
-      case_when(
+      #Step 4: set up the names for the x-axis and the width of bin
+      x_axis_label <- case_when(
         input$x_axis_011 == "target_year" ~ "Target year (cal BP)",
         input$x_axis_011 == "measurement_error" ~ "Measurement error (14C yrs)",
         input$x_axis_011 == "offset_magnitude" ~ "Offset magnitude (14C yrs)"
       )
       
+      if (input$x_axis_011 ==  "target_year") {
+        width_of_bin <- 100
+      } else {
+        width_of_bin = 1
+      }
+      
       #Step 5: build the ggplot
       sim_results_grouped %>%
         ggplot(aes(x = x_axis, y = ratio_accurate)) +
-        geom_histogram(stat = "identity", width = 0.1)
+        geom_histogram(stat = "identity", width = width_of_bin) +
+        ylim(c(0,1)) +
+        xlab(x_axis_label)
       
     
     }
