@@ -16,10 +16,17 @@ shinyUI(
                               label = "Choose variable:",
                               choices = names(singles_011_results[,c(1, 3, 4)])
                             ),
-                            selectInput(
-                              inputId = "y_axis_011",
+                            radioButtons(
+                              inputId = "predicted_variable",
                               label = "Choose variable:",
-                              choices = names(singles_011_results[,c(5, 6, 9, 10)])
+                              choices = list("Accuracy" = "accuracy",
+                                             "Off-target" = "off_target")
+                            ),
+                            radioButtons(
+                              inputId = "hpd_area",
+                              label = "Select HPD Area:",
+                              choices = list("68% probability" = "hpd_68",
+                                             "95% probability" = "hpd_95")
                             ),
                             #Set up sliders------------------------------------
                             sliderInput(
