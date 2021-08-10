@@ -12,9 +12,7 @@ shinyServer(function(input, output) {
     {input$target_year_011}
   )
   output$plotting_table_011 <- renderTable({
-    #Set up the switch function for the Plotting axes selection
-    # x_axis <- switch(input$x_axis_011, "offset_magnitude")
-    # y_axis <- switch(input$y_axis_011)
+
     #Prep sims: filter fit slider choice and round where applicable
     sim_results_filtered <- singles_011_results %>%
       filter( 
