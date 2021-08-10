@@ -17,13 +17,13 @@ shinyUI(
                               choices = names(singles_011_results[,c(1, 3, 4)])
                             ),
                             radioButtons(
-                              inputId = "predicted_variable",
+                              inputId = "predicted_variable_011",
                               label = "Choose variable:",
                               choices = list("Accuracy" = "accuracy",
                                              "Off-target" = "off_target")
                             ),
                             radioButtons(
-                              inputId = "hpd_area",
+                              inputId = "hpd_area_011",
                               label = "Select HPD Area:",
                               choices = list("68% probability" = "hpd_68",
                                              "95% probability" = "hpd_95")
@@ -55,7 +55,9 @@ shinyUI(
                             verbatimTextOutput("offset_magnitude_011"),
                             verbatimTextOutput("measurement_error_011"),
                             verbatimTextOutput("target_year_011"),
-                            tableOutput("plotting_table_011"))
+                            verbatimTextOutput("button_1"),
+                            verbatimTextOutput("button_2"),
+                            plotOutput("plot_011"))
                         )
                         ),
 #WMDs021 EDA-------------------------------------------------------------------
