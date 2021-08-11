@@ -44,9 +44,9 @@ shinyServer(function(input, output) {
       sim_results_grouped <- sim_results_filtered %>%
         #1.1 generate the bins to group on
         mutate(
-          target_year  = round(target_year, digits = -2),
-          measurement_error = round(measurement_error),
-          offset_magnitude  = round(offset_magnitude)
+          target_year  = plyr::round_any(target_year, input$rounding_slider*100),
+          measurement_error = plyr::round_any(measurement_error, input$rounding_slider),
+          offset_magnitude  = plyr::round_any(offset_magnitude, input$rounding_slider)
         ) %>%
         #1.2 group and summarise (extract average accuracy over a given bin)
         group_by(!!sym(input$x_axis_011)) %>%
@@ -81,9 +81,9 @@ shinyServer(function(input, output) {
       )
       
       if (input$x_axis_011 ==  "target_year") {
-        width_of_bin <- 100
+        width_of_bin <- input$rounding_slider*100
       } else {
-        width_of_bin = 1
+        width_of_bin = input$rounding_slider
       }
       
       if (input$hpd_area_011 == "hpd_68") {
