@@ -28,16 +28,24 @@ shinyUI(
                               choices = list("68% probability" = "hpd_68",
                                              "95% probability" = "hpd_95")
                             ),
+                            #Set up the rounding slider
+                            sliderInput(
+                              inputId = "rounding_slider",
+                              label = "Select bin width",
+                              min = 1,
+                              max = 10,
+                              value = 1
+                            ),
                             #Set up sliders------------------------------------
                             sliderInput(
                               inputId = "offset_magnitude_011",
-                              label = "Offset Magnitude (14C yrs)",
+                              label = "Offset magnitude (14C yrs)",
                               min = -50,
                               max = 50,
                               value = c(-50, 50)),
                             sliderInput(
                               inputId = "measurement_error_011",
-                              label = "Measurement Error (14C yrs 1-s)",
+                              label = "Measurement error (14C yrs 1-s)",
                               min = 8,
                               max = 32,
                               value = c(8, 32)

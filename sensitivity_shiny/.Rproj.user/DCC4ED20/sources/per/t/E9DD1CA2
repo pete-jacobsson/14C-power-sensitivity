@@ -3,7 +3,7 @@
     "path": "C:/Users/Pete.C14/Dropbox/15_Github_repos/14C-power-sensitivity/sensitivity_shiny/bug_search.R",
     "project_path": "bug_search.R",
     "type": "r_source",
-    "hash": "3853895166",
+    "hash": "3871706213",
     "contents": "",
     "dirty": false,
     "created": 1628170993803.0,
@@ -11,15 +11,15 @@
     "relative_order": 4,
     "properties": {
         "tempName": "Untitled1",
-        "cursorPosition": "13,40",
+        "cursorPosition": "20,0",
         "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1628601354,
+    "lastKnownWriteTime": 1628689574,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1628601354037,
+    "last_content_update": 1628689574208,
     "read_only": false,
     "read_only_alternatives": []
 }
