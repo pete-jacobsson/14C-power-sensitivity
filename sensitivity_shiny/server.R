@@ -22,7 +22,7 @@ shinyServer(function(input, output) {
   
   output$plot_011 <- renderPlot({
     
-    #Prep sims: filter fit slider choice and round where applicable
+    #Prep sims: filter fit slider choice and round where applicable------------
     sim_results_filtered <- singles_011_results %>%
       filter( 
         target_year >= input$target_year_011[1] & 
@@ -34,7 +34,7 @@ shinyServer(function(input, output) {
       )
 
     
-    #Fork 1: plot ratio accurate
+    #Fork 1: plot ratio accurate-----------------------------------------------
     
     
     #Group on the desired parameter
@@ -103,11 +103,40 @@ shinyServer(function(input, output) {
         theme_classic()
       
     
+    } else {
+    # Fork 2: plot offset magnitude--------------------------------------------
+      #Step 2: Move to long format for subsetting given hpd area choice
+      sim_results_filtered <- sim_results_filtered %>%
+        pivot_longer(cols = c(off_target_68, off_target_95),
+                     names_to = "hpd_area",
+                     values_to = "off_target")
+      
+      #Step 2: filter away the hpd area not chosen on the radio button
+      if (input$hpd_area_011 == "hpd_68") {
+        sim_results_filtered <- sim_results_filtered %>%
+          filter(hpd_area == "off_target_68") %>%
+          select(-hpd_area) 
+      } else {
+        sim_results_filtered <- sim_results_filtered %>%
+          filter(hpd_area == "off_target_95") %>%
+          select(-hpd_area)
+      }
+      
+      #Step 3: shift the off-targetvalues to neg for neg offsets for target_yr observations
+      if (input$x_axis_011 == "target_year") {
+        sim_results_filtered <- sim_results_filtered %>%
+          mutate(off_target = if_else(offset_magnitude < 0,
+                                      off_target * -1,
+                                      off_target))  
+      }
+      
+      #Step 4: Do the plotting
+      sim_results_filtered %>%
+        ggplot(aes(x = !!sym(input$x_axis_011), y = off_target)) +
+        geom_point()
+      
+      
     }
-    
-    
-    
-    
     
     
   })
