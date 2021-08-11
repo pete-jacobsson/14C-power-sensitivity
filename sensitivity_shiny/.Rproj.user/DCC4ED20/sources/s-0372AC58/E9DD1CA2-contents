@@ -6,4 +6,13 @@ singles_011_results %>%
   ) %>%
   head()
 
-singles_011_results[,1]
+singles_011_results$V1
+
+test <- "potato"
+
+case_when(
+  test == "target_year" ~ "Target Year",
+  test == "potato" ~ "Potatofish"
+)
+
+
