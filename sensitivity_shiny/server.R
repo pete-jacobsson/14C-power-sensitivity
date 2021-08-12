@@ -109,17 +109,41 @@ shinyServer(function(input, output) {
                                       off_target))  
       }
       
-      #Step 4: Do the plotting
-      off_target_plot <- sim_results_filtered %>%
-        ggplot(aes(x = !!sym(input$x_axis_011), y = off_target)) +
-        geom_point() +
-        xlab(x_axis_label) +
-        ylab("Off-target magnitude") +
-        theme_bw()
+      #Step 4: Do the basic plotting
+      # off_target_plot <- sim_results_filtered %>%
+      #   ggplot(aes(x = !!sym(input$x_axis_011), y = off_target)) +
+      #   xlab(x_axis_label) +
+      #   ylab("Off-target magnitude") +
+      #   theme_bw()
       
-      if (input$x_axis_011 == "target_year") {
+      #Step 5: Color on demand
+      if (input$off_target_color == "nope") {
+        off_target_plot <- sim_results_filtered %>%
+          ggplot(aes(x = !!sym(input$x_axis_011), y = off_target)) +
+          geom_point() +
+          xlab(x_axis_label) +
+          ylab("Off-target magnitude") +
+          theme_bw()
+      } else {
+        off_target_plot <- sim_results_filtered %>%
+          ggplot(aes(x = !!sym(input$x_axis_011), y = off_target)) +
+          geom_point(aes(col = abs(!!sym(input$off_target_color)))) +
+          xlab(x_axis_label) +
+          ylab("Off-target magnitude") +
+          theme_bw()
+      }
+      
+      
+      #Step 6: Remove negatives from the y axis for target-yea x-axis
+      
+      if (input$x_axis_011 == "target_year" && input$hpd_area_011 == "hpd_68") {
         off_target_plot +
-          scale_y_continuous(labels = c(300, 200, 100, 0, 100, 200, 300))
+          scale_y_continuous(labels = c(300, 200, 100,  0, 100, 200, 300))
+        off_target_plot
+      } else if (input$x_axis_011 == "target_year" && input$hpd_area_011 == "hpd_95") {
+        off_target_plot +
+          scale_y_continuous(labels = c(200, 100,  0, 100, 200))
+        off_target_plot
       } else {
         off_target_plot
       }

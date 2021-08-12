@@ -28,7 +28,15 @@ shinyUI(
                               choices = list("68% probability" = "hpd_68",
                                              "95% probability" = "hpd_95")
                             ),
-                            #Set up the rounding slider
+                            #Set up color control for off-target graphs--------
+                            radioButtons(
+                              inputId = "off_target_color",
+                              label = "Colour code off-target graph?",
+                              choices = list("No" = "nope",
+                                             "Measurement error" = "measurement_error",
+                                             "Offset magnitude" = "offset_magnitude")
+                            ),
+                            #Set up the rounding slider------------------------
                             sliderInput(
                               inputId = "rounding_slider",
                               label = "Select bin width",
