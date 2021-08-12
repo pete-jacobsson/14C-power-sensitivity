@@ -1,25 +1,6 @@
 shinyServer(function(input, output) {
   
   #Singles011--------------------------------------------------------------------  
-  
-  # new radio buttons check
-  output$button_1 <- renderPrint(
-    {input$predicted_variable_011}
-  )
-  output$button_2 <- renderPrint(
-    {input$hpd_area_011}
-  )
-  
-  output$offset_magnitude_011 <- renderPrint(
-    {input$offset_magnitude_011}
-  )
-  output$measurement_error_011 <- renderPrint(
-    {input$measurement_error_011}
-  )
-  output$target_year_011 <- renderPrint(
-    {input$target_year_011}
-  )
-  
   output$plot_011 <- renderPlot({
     
     #Prep sims: filter fit slider choice and round where applicable------------
@@ -32,11 +13,15 @@ shinyServer(function(input, output) {
         measurement_error >= input$measurement_error_011[1] & 
           measurement_error <= input$measurement_error_011[2]
       )
-
+    
+    #Get the x_axis_label
+    x_axis_label <- case_when(
+      input$x_axis_011 == "target_year" ~ "Target year (cal BP)",
+      input$x_axis_011 == "measurement_error" ~ "Measurement error (14C yrs)",
+      input$x_axis_011 == "offset_magnitude" ~ "Offset magnitude (14C yrs)"
+    )
     
     #Fork 1: plot ratio accurate-----------------------------------------------
-    
-    
     #Group on the desired parameter
     if (input$predicted_variable_011 == "accuracy") {
       
@@ -73,13 +58,7 @@ shinyServer(function(input, output) {
           select(-hpd_area)
       }
       
-      #Step 4: set up the names for the x-axis, the width of bin and the position of the geom_vline
-      x_axis_label <- case_when(
-        input$x_axis_011 == "target_year" ~ "Target year (cal BP)",
-        input$x_axis_011 == "measurement_error" ~ "Measurement error (14C yrs)",
-        input$x_axis_011 == "offset_magnitude" ~ "Offset magnitude (14C yrs)"
-      )
-      
+      #Step 4: set up the width of bin and the position of the geom_vline
       if (input$x_axis_011 ==  "target_year") {
         width_of_bin <- input$rounding_slider*100
       } else {
@@ -131,9 +110,19 @@ shinyServer(function(input, output) {
       }
       
       #Step 4: Do the plotting
-      sim_results_filtered %>%
+      off_target_plot <- sim_results_filtered %>%
         ggplot(aes(x = !!sym(input$x_axis_011), y = off_target)) +
-        geom_point()
+        geom_point() +
+        xlab(x_axis_label) +
+        ylab("Off-target magnitude") +
+        theme_bw()
+      
+      if (input$x_axis_011 == "target_year") {
+        off_target_plot +
+          scale_y_continuous(labels = c(300, 200, 100, 0, 100, 200, 300))
+      } else {
+        off_target_plot
+      }
       
       
     }
