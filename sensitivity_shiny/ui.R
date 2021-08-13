@@ -93,7 +93,7 @@ shinyUI(
 
 
     navbarMenu(title = "Maximum Permissible Error",
-#Singles011 EDA----------------------------------------------------------------               
+#Singles011 MPE----------------------------------------------------------------               
                tabPanel(title = "Single Calibrations 011"),
 #WMDs021 EDA-------------------------------------------------------------------              
                tabPanel(title = "Wiggle match Dates 021"),

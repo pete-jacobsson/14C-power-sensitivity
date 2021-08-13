@@ -136,14 +136,11 @@ shinyServer(function(input, output) {
       
       #Step 6: Remove negatives from the y axis for target-yea x-axis
       
-      if (input$x_axis_011 == "target_year" && input$hpd_area_011 == "hpd_68") {
+      if (input$x_axis_011 == "target_year") {
         off_target_plot +
-          scale_y_continuous(labels = c(300, 200, 100,  0, 100, 200, 300))
-        off_target_plot
-      } else if (input$x_axis_011 == "target_year" && input$hpd_area_011 == "hpd_95") {
-        off_target_plot +
-          scale_y_continuous(labels = c(200, 100,  0, 100, 200))
-        off_target_plot
+          scale_y_continuous(labels = c(300, 200, 100,  0, 100, 200, 300),
+                             breaks = c(-300, -200, -100,  0, 100, 200, 300),
+                             limits = c(-320, 320))
       } else {
         off_target_plot
       }
