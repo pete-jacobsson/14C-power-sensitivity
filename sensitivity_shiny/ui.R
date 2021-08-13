@@ -68,7 +68,8 @@ shinyUI(
                             ),
                           #Main panel------------------------------------------
                           mainPanel(
-                            plotOutput("plot_011_eda"))
+                            plotOutput("plot_011_eda")
+                            )
                         )
                         ),
 #WMDs021 EDA-------------------------------------------------------------------
@@ -102,8 +103,8 @@ shinyUI(
                             radioButtons(
                               inputId = "hpd_area_011_mpe",
                               label = "Select HPD Area:",
-                              choices = list("68% probability" = "hpd_68",
-                                             "95% probability" = "hpd_95")
+                              choices = list("68% probability" = "off_target_68",
+                                             "95% probability" = "off_target_95")
                             ),
                             #MPE controls--------------------------------------
                             sliderInput(
@@ -114,7 +115,7 @@ shinyUI(
                               value = 5
                             ),
                             sliderInput(
-                              inputId = "singles_011_mpe_tolerance",
+                              inputId = "singles_011_tolerance_mpe",
                               label = "What is your MPE tolerance?",
                               min = 0,
                               max = 1,
@@ -150,7 +151,9 @@ shinyUI(
                               value = c(0, 12310)
                             )
                           ),
-                          mainPanel()
+                          mainPanel(
+                            plotOutput("plot_011_mpe")
+                            )
                         )
                         ),
 #WMDs021 EDA-------------------------------------------------------------------              

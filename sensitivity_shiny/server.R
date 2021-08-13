@@ -150,5 +150,59 @@ shinyServer(function(input, output) {
     
     
   })
+  output$plot_011_mpe <- renderPlot({
+    
+    #Prep sims: filter fit slider choice and round where applicable------------
+    sim_results_011_mpe <- singles_011_results %>%
+      filter( 
+        target_year >= input$target_year_011_mpe[1] & 
+          target_year <= input$target_year_011_mpe[2],
+        offset_magnitude >= input$offset_magnitude_011_mpe[1] & 
+          offset_magnitude <= input$offset_magnitude_011_mpe[2],
+        measurement_error >= input$measurement_error_011_mpe[1] & 
+          measurement_error <= input$measurement_error_011_mpe[2]
+      )
+    
+    #Get the x_axis_label
+    x_axis_label_mpe <- case_when(
+      input$x_axis_011_mpe == "target_year" ~ "Target year (cal BP)",
+      input$x_axis_011_mpe == "measurement_error" ~ "Measurement error (14C yrs)",
+      input$x_axis_011_mpe == "offset_magnitude" ~ "Offset magnitude (14C yrs)"
+    )
+    
+    #Pivot to longer, drop unwanted HPD area, replace NAs with zeros
+    
+    sim_results_011_mpe <- sim_results_011_mpe %>%
+      select(-accuracy_68, -accuracy_95, -precision_68, -precision_95) %>%
+      pivot_longer(cols = c(off_target_68, off_target_95),
+                   names_to = "hpd_area",
+                   values_to = "off_target") %>%
+      filter(hpd_area == input$hpd_area_011_mpe) %>%
+      mutate(off_target = replace_na(off_target, 0))
+    
+    #Establish if outside MPE, apply relevant rounding and group
+    group_011_mpe <- sim_results_011_mpe %>%
+      mutate(
+        outside_mpe = if_else(off_target > input$singles_011_say_mpe, 1, 0),
+        target_year  = plyr::round_any(target_year, input$rounding_slider_011_mpe*100),
+        measurement_error = plyr::round_any(measurement_error, input$rounding_slider_011_mpe),
+        offset_magnitude  = plyr::round_any(offset_magnitude, input$rounding_slider_011_mpe)
+      ) %>%
+      group_by(!!sym(input$x_axis_011_mpe)) %>%
+      summarise(
+        ratio_out_mpe = mean(outside_mpe)
+      )
+    
+    #Set up the name of the grouped variable for plotting
+    colnames(group_011_mpe)[1] <- "x_axis"
+    
+    group_011_mpe %>%
+      ggplot(aes(x = x_axis, y = ratio_out_mpe)) +
+      geom_line()
+    
+    
+  })
+  
+  
   
 })
