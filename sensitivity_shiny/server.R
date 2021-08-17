@@ -109,12 +109,11 @@ shinyServer(function(input, output) {
                                       off_target))  
       }
       
-      #Step 4: Do the basic plotting
-      # off_target_plot <- sim_results_filtered %>%
-      #   ggplot(aes(x = !!sym(input$x_axis_011_eda), y = off_target)) +
-      #   xlab(x_axis_label) +
-      #   ylab("Off-target magnitude") +
-      #   theme_bw()
+      #Step 4: Set up colour labs
+      colour_lab <- case_when(input$off_target_color_011_eda == 
+                                "measurement_error" ~ "Measurement error (1-s)",
+                              input$off_target_color_011_eda == 
+                                "offset_magnitude" ~ "Offset magnitude (14C yrs)")
       
       #Step 5: Color on demand
       if (input$off_target_color_011_eda == "nope") {
@@ -128,8 +127,11 @@ shinyServer(function(input, output) {
         off_target_plot <- sim_results_filtered %>%
           ggplot(aes(x = !!sym(input$x_axis_011_eda), y = off_target)) +
           geom_point(aes(col = abs(!!sym(input$off_target_color_011_eda)))) +
-          xlab(x_axis_label) +
-          ylab("Off-target magnitude") +
+          labs(
+            x = x_axis_label,
+            y = "Off-target magnitude",
+            colour = colour_lab
+          )
           theme_bw()
       }
       
