@@ -73,7 +73,63 @@ shinyUI(
                         )
                         ),
 #Singles011 EDA 2: heatmaps----------------------------------------------------
-               tabPanel(title = "Heatmaps"),
+               tabPanel(title = "Heatmaps",
+                        sidebarLayout(
+                          sidebarPanel(
+                            "",
+                            #Select axes---------------------------------------
+                            selectInput(
+                              inputId = "x_axis_011_heatmap",
+                              label = "Choose variable:",
+                              choices = names(singles_011_results[,c(1, 3, 4)])
+                            ),
+                            selectInput(
+                              inputId = "y_axis_011_heatmap",
+                              label = "Choose variable:",
+                              choices = names(singles_011_results[,c(1, 3, 4)])
+                            ),
+                            #Select accuracy level and rounding----------------
+                            radioButtons(
+                              inputId = "hpd_area_011_heatmap",
+                              label = "Select HPD Area:",
+                              choices = list("68% probability" = "hpd_68",
+                                             "95% probability" = "hpd_95")
+                            ),
+                            checkboxInput(
+                              inputId = "interpolate_011_heatmap",
+                              label = "Interpolate heatmap",
+                              value = FALSE),
+                            sliderInput(
+                              inputId = "rounding_slider_011_heatmap",
+                              label = "Select bin width",
+                              min = 1,
+                              max = 10,
+                              value = 1
+                            ),
+                            #Select parameter ranges---------------------------
+                            sliderInput(
+                              inputId = "offset_magnitude_011_heatmap",
+                              label = "Offset magnitude (14C yrs)",
+                              min = -50,
+                              max = 50,
+                              value = c(-50, 50)),
+                            sliderInput(
+                              inputId = "measurement_error_011_heatmap",
+                              label = "Measurement error (14C yrs 1-s)",
+                              min = 8,
+                              max = 32,
+                              value = c(8, 32)
+                            ),
+                            sliderInput(
+                              inputId = "target_year_011_heatmap",
+                              label = "Target year (cal BP)",
+                              min = 0, 
+                              max = 12310,
+                              value = c(0, 12310)
+                            )
+                          ),
+                          mainPanel()
+                        )),
 #Singles011 MPE----------------------------------------------------------------
                tabPanel(title = "Maximum permissable errors",
                         sidebarLayout(
