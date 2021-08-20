@@ -200,7 +200,14 @@ shinyServer(function(input, output) {
     
     group_011_mpe %>%
       ggplot(aes(x = x_axis, y = ratio_out_mpe)) +
-      geom_line()
+      geom_line() +
+      labs(
+        x = x_axis_label_mpe,
+        y = "Ratio outside MPE"
+      ) +
+      ylim(c(0,1)) +
+      theme_bw() +
+      geom_hline(yintercept = input$singles_011_tolerance_mpe)
     
     
   })
