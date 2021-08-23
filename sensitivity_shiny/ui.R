@@ -80,20 +80,20 @@ shinyUI(
                             #Select axes---------------------------------------
                             selectInput(
                               inputId = "x_axis_011_heatmap",
-                              label = "Choose variable:",
+                              label = "Choose variable 1:",
                               choices = names(singles_011_results[,c(1, 3, 4)])
                             ),
                             selectInput(
                               inputId = "y_axis_011_heatmap",
-                              label = "Choose variable:",
+                              label = "Choose variable 2:",
                               choices = names(singles_011_results[,c(1, 3, 4)])
                             ),
                             #Select accuracy level and rounding----------------
                             radioButtons(
                               inputId = "hpd_area_011_heatmap",
                               label = "Select HPD Area:",
-                              choices = list("68% probability" = "hpd_68",
-                                             "95% probability" = "hpd_95")
+                              choices = list("68% probability" = "ratio_68",
+                                             "95% probability" = "ratio_95")
                             ),
                             checkboxInput(
                               inputId = "interpolate_011_heatmap",
@@ -123,13 +123,16 @@ shinyUI(
                             sliderInput(
                               inputId = "target_year_011_heatmap",
                               label = "Target year (cal BP)",
-                              min = 0, 
+                              min = 0,
                               max = 12310,
                               value = c(0, 12310)
                             )
                           ),
-                          mainPanel()
-                        )),
+                          mainPanel(
+                            plotOutput("plot_011_heatmap")
+                          )
+                        )
+                        ),
 #Singles011 MPE----------------------------------------------------------------
                tabPanel(title = "Maximum permissable errors",
                         sidebarLayout(
@@ -192,6 +195,7 @@ shinyUI(
                             value = c(0, 12310)
                           )
                           ),
+                          #Main panel------------------------------------------
                           mainPanel(
                             plotOutput("plot_011_mpe")
                           )

@@ -152,6 +152,66 @@ shinyServer(function(input, output) {
     
     
   })
+  output$plot_011_heatmap <- renderPlot({
+    #Prep labels for figure downstream-------------------------------------------
+    x_axis_label_heatmap <- case_when(
+      input$x_axis_011_heatmap == "target_year" ~ "Target year (cal BP)",
+      input$x_axis_011_heatmap == "measurement_error" ~ "Measurement error (14C yrs)",
+      input$x_axis_011_heatmap == "offset_magnitude" ~ "Offset magnitude (14C yrs)"
+    )
+
+    y_axis_label_heatmap <- case_when(
+      input$y_axis_011_heatmap == "target_year" ~ "Target year (cal BP)",
+      input$y_axis_011_heatmap == "measurement_error" ~ "Measurement error (14C yrs)",
+      input$y_axis_011_heatmap == "offset_magnitude" ~ "Offset magnitude (14C yrs)"
+    )
+
+
+    #Prep the data frame underpinning the heatmap------------------------------
+ 
+    singles_011_heatmap_df <- singles_011_results %>%
+      filter(
+        target_year >= input$target_year_011_heatmap[1] &
+          target_year <= input$target_year_011_heatmap[2],
+        offset_magnitude >= input$offset_magnitude_011_heatmap[1] &
+          offset_magnitude <= input$offset_magnitude_011_heatmap[2],
+        measurement_error >= input$measurement_error_011_heatmap[1] &
+          measurement_error <= input$measurement_error_011_heatmap[2]
+      )
+
+    singles_011_heatmap_df <- singles_011_heatmap_df %>%
+      #Generate the bins to group on
+      mutate(
+        target_year  = plyr::round_any(target_year, input$rounding_slider_011_heatmap*100),
+        measurement_error = plyr::round_any(measurement_error, input$rounding_slider_011_heatmap),
+        offset_magnitude  = plyr::round_any(offset_magnitude, input$rounding_slider_011_heatmap)
+      ) %>%
+      #Group and summarise (extract average accuracy over a given bin)
+      group_by(!!sym(input$x_axis_011_heatmap), !!sym(input$y_axis_011_heatmap)) %>%
+      summarise(
+        ratio_68 = mean(accuracy_68),
+        ratio_95 = mean(accuracy_95)
+      ) %>%
+      #Pivot to longer and filter
+      pivot_longer(c(ratio_68, ratio_95), 
+                   names_to = "hpd_area",
+                   values_to = "ratio_accurate") %>%
+      filter(hpd_area == input$hpd_area_011_heatmap)
+    
+    colnames(singles_011_heatmap_df)[1] <- "x_axis"
+    colnames(singles_011_heatmap_df)[2] <- "y_axis"
+    
+    singles_011_heatmap_df %>%
+      ggplot(aes(x = x_axis, y = y_axis, fill = ratio_accurate)) +
+      geom_raster(interpolate = input$interpolate_011_heatmap) +
+      theme_minimal() +
+      labs(
+        x = x_axis_label_heatmap,
+        y = x_axis_label_heatmap,
+        fill = "Ratio accurate"
+      )
+
+  })
   output$plot_011_mpe <- renderPlot({
     
     #Prep sims: filter fit slider choice and round where applicable------------
