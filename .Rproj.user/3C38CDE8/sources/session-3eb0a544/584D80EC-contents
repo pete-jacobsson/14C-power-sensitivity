@@ -1,0 +1,13 @@
+---
+title: "14C Power/Sensitivity notes"
+author: "Piotr Jacobsson"
+format: html
+---
+
+This document contains the research notes from the analysis of the simulations conducted using R and OxCal. This is a rough notebook that begins at the point when the project was re-initiated in June 2023 until completion
+
+##Part 1: make sense of what is here and order things up
+The first thing that I spotted was that much of the data files were sitting right in the main folder. So this will get ordered up - but I'll leave the Markdown files describing everything on top (I might need them lets see if past me had any brains worth of brain :P).
+
+Next will be working out what the individual simulations are and what they cover - as well as taking some time to play with the Shiny App that I built to support the EDA. 
+The thing looks much better now.
