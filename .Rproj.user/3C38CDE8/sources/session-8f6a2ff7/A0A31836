@@ -1,14 +1,14 @@
 {
-    "id": "7A03EBF9",
-    "path": "~/Documents/GitHub/14C-power-sensitivity/notebook_004_project_sims.Rmd",
-    "project_path": "notebook_004_project_sims.Rmd",
-    "type": "r_markdown",
-    "hash": "0",
+    "id": "A0A31836",
+    "path": "~/Documents/GitHub/14C-power-sensitivity/sensitivity_shiny/server.R",
+    "project_path": "sensitivity_shiny/server.R",
+    "type": "r_source",
+    "hash": "3550011877",
     "contents": "",
     "dirty": false,
-    "created": 1686826567157.0,
+    "created": 1686826794832.0,
     "source_on_save": false,
-    "relative_order": 1,
+    "relative_order": 5,
     "properties": {
         "source_window_id": "",
         "Source": "Source"

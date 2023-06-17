@@ -3,7 +3,7 @@
     "path": "~/Documents/GitHub/14C-power-sensitivity/analysis_notes.qmd",
     "project_path": "analysis_notes.qmd",
     "type": "quarto_markdown",
-    "hash": "0",
+    "hash": "4202231581",
     "contents": "",
     "dirty": false,
     "created": 1686826628186.0,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "12,32",
-        "scrollLine": "0"
+        "cursorPosition": "36,0",
+        "scrollLine": "25"
     },
     "folds": "",
-    "lastKnownWriteTime": 1686827169,
+    "lastKnownWriteTime": 1686981264,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1686827169457,
+    "last_content_update": 1686981264693,
     "read_only": false,
     "read_only_alternatives": []
 }
