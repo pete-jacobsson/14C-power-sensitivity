@@ -1,0 +1,429 @@
+---
+title: "How wrong before it gets *wrong*? Radiocarbon sensitivity with OxCal and R."
+subtitle: "Simulating oxcal models II: project simulations"
+author: "Pete Jacobsson"
+output: html_document
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+source("001_simulation_tools.R")
+source("003_parsing_tools.r")
+oxcal_dir <- "C:/Users/your_username/your_oxcal_folder/" #rename to fit your needs
+
+
+```
+
+## Introduction
+For our sensitivity analysis, we simulated 473,500 single calibrations, wiggle-match dates and uniform bound sequence models. This document summarizes how the simulations were generated and how they were parsed. For the script version check the files:
+* 002_project_simulations.r
+* 004_project_parsing.r
+
+```{r, include = FALSE}
+sims_list <- read_csv("sims_list.csv") #Load the excel table
+sims_list <- sims_list %>%
+  select(`Model Type`:`Number of simulations`) %>%
+  mutate(
+    `Model Type` = if_else(is.na(`Model Type`), "", `Model Type`),
+    `Parameter Ranges`  = if_else(is.na(`Parameter Ranges`), "", `Parameter Ranges`),
+    `Offset (14C years)`  = if_else(is.na(`Offset (14C years)`), "", `Offset (14C years)`),
+    Notes  = if_else(is.na(Notes), "", Notes)
+  )
+```
+
+```{r, echo = FALSE}
+
+
+kable(
+  sims_list,
+  caption = "Simulations list",
+  align = "lcccccc"
+) %>%
+  kable_styling(font_size = 10) %>%
+  column_spec(1, width = "8em") %>%
+  column_spec(2, width = "16em") %>%
+  column_spec(3, width = "2em") %>%
+  column_spec(4, width = "2em") %>%
+  column_spec(5, width = "6em") %>%
+  column_spec(6, width = "12em") %>%
+  column_spec(7, width = "6em")
+```
+
+
+
+
+
+As single clibartions were handled manually, their simulation and parsing are covered ina separate notebook <offset_rmd_004_single_sims.Rmd> including comparisons of the simulation algorithm used here to that of OxCal.
+
+Thirty-eight thousand and five hundred uniform bound sequences were, or are being estimated for this project. These simulations explore the effects of model structure and offsets on model accuracy, alongside evaluating the effect that differences between IntCal13 and IntCal20 might have on the accuracy of models built for the period 200 - 1200 cal BP.
+
+Wiggle-match dates are by far the largest simulated category. This is a matter expediency: as they are estimated through grid approximation they are much faster to estimate than uniform bound sequence models and thus make good candidates for a detailed first-order exploration of the impacts of the calibration curve of chronological models at a decadal level. Note that in practice, further exploration of uniform bound sequences might be desirable.
+
+Note that the simulation script OxCal paths as provided will not work on your computer - if you want to reproduce this project, insert your OxCal paths and desired directories for simulation output.
+
+
+## Simulation scripts
+
+### Wiggle-match dates
+The simple Bayesian wiggle-match date model explored here assumes that the time elapsed between dated events is known exactly. Often used for tree-rings, other applications where requirements met also relevant.
+
+#### wmds_021
+Core simulation batch, used to explore general behavior and structure-accuracy-offset interactions across the dendro-dated tree-ring section of the radiocarbon calibration curve (0 - 12310 cal BP).
+```{r, eval = FALSE}
+wmds_021_params = data.frame(SimNumber = seq(1, 60000, 1),
+                             Targets = sample(seq(1, 12310, by=1),60000, replace = T),
+                             Span = sample(seq(25, 100, by=1),60000, replace = T),
+                             Samples = sample(seq(2, 25, by=1),60000, replace = T),
+                             Errors = sample(seq(8, 32, by=1),60000, replace = T),
+                             Offset = runif(60000, -50, 50),
+                             OffsetVaria = runif(60000, 0.001, 26.5))
+
+wmds_021_names <- str_c(oxcal_dir, "Sensitivity021WMDs/Sensitivity021WMDs", 1:60000)
+
+for(i in 1:1){
+  write.table(simulate_wmds(target = wmds_021_params$Targets[i],
+                            span = wmds_021_params$Span[i],
+                            n_Samples = wmds_021_params$Samples[i],
+                            error = wmds_021_params$Errors[i],
+                            offset = wmds_021_params$Offset[i],
+                            offset_sigma = wmds_021_params$OffsetVaria[i]),
+              file = str_c(wmds_021_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", str_c(wmds_021_names[i], ".input")))
+  oxcal_js_stripper(wmds_021_names[i])
+}
+
+```
+
+#### wmds_022
+Explores how wiggle-match dates simulated from IntCal20 in the period 200 - 1200 cal BP perform when calibrated against IntCal13. Evaluates realistic extent of calibration curve error on 14C wmd reliability.
+```{r, eval = FALSE}
+wmds_022_params = data.frame(SimNumber = seq(1, 5000, 1),
+                             Targets = sample(seq(200, 1200, by=1), 5000, replace = T),
+                             Span = sample(seq(25, 100, by=1), 5000, replace = T),
+                             Samples = sample(seq(2, 25, by=1), 5000, replace = T),
+                             Errors = sample(seq(8, 32, by=1), 5000, replace = T),
+                             OffsetVaria = runif(5000, 0.001, 26.5))
+
+wmds_022_names <- str_c(oxcal_dir, "Sensitivity022WMDs/Sensitivity022WMDs", 1:5000)
+
+for(i in 1:1){
+  write.table(simulate_wmds(target = wmds_022_params$Targets[i],
+                            span = wmds_022_params$Span[i],
+                            n_samples = wmds_022_params$Samples[i],
+                            error = wmds_022_params$Errors[i],
+                            curve_to_oxcal = "intcal13Real.14c"),
+              file = str_c(wmds_022_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal/bin/OxCalWin.exe", str_c(wmds_022_names[i], ".input")))
+  strip_oxcal_js(wmds_022_names[i])
+}
+
+```
+
+#### wmds_023 and wmds_024
+These simulations explore behavior of wiggle-match dates subject to systematic offset on a calibration plateau (wmds_023: 9901-10100 cal BP) and on a steep section of the calibration curve (wmds_024: 6801-7000 cal BP). Compare to wmds_021.
+```{r, eval = FALSE}
+wmds_023_params = data.frame(SimNumber = seq(1, 20000, 1),
+                             Targets = sample(seq(9901, 10100, by=1), 20000, replace = T),
+                             Span = sample(seq(25, 100, by=1),20000, replace = T),
+                             Samples = sample(seq(2, 25, by=1),20000, replace = T),
+                             Errors = sample(seq(8, 32, by=1),20000, replace = T),
+                             Offset = runif(20000, -50, 50),
+                             OffsetVaria = runif(20000, 0.001, 26.5))
+
+wmds_023_names <- str_c(oxcal_dir, "Sensitivity023WMDs/Sensitivity023WMDs", 1:20000)
+
+for(i in 1:1){
+  write.table(simulate_wmds(target = wmds_023_params$Targets[i],
+                            span = wmds_023_params$Span[i],
+                            n_Samples = wmds_023_params$Samples[i],
+                            error = wmds_023_params$Errors[i],
+                            offset = wmds_023_params$Offset[i],
+                            offset_sigma = wmds_023_params$OffsetVaria[i]),
+              file = str_c(wmds_023_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", str_c(wmds_023_names[i], ".input")))
+  oxcal_js_stripper(wmds_023_names[i])
+}
+
+```
+
+```{r, eval = FALSE}
+wmds_024_params = data.frame(SimNumber = seq(1, 20000, 1),
+                             Targets = sample(seq(6801, 7000, by=1),20000, replace = T),
+                             Span = sample(seq(25, 100, by=1),20000, replace = T),
+                             Samples = sample(seq(2, 25, by=1),20000, replace = T),
+                             Errors = sample(seq(8, 32, by=1),20000, replace = T),
+                             Offset = runif(20000, -50, 50),
+                             OffsetVaria = runif(20000, 0.001, 26.5))
+
+wmds_024_names <- str_c(oxcal_dir, "Sensitivity024WMDs/Sensitivity024WMDs", 1:20000)
+
+for(i in 1:1){
+  write.table(simulate_wmds(target = wmds_024_params$Targets[i],
+                            span = wmds_024_params$Span[i],
+                            n_Samples = wmds_024_params$Samples[i],
+                            error = wmds_024_params$Errors[i],
+                            offset = wmds_024_params$Offset[i],
+                            offset_sigma = wmds_024_params$OffsetVaria[i]),
+              file = str_c(wmds_024_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", str_c(wmds_024_names[i], ".input")))
+  oxcal_js_stripper(wmds_024_names[i])
+}
+
+```
+
+#### wmds_025
+Three-hundred thousand simulations to assess decade by decade how the shape of the calibration curve changes the relationships between offset magnitudes, model structure and model accuracy.
+```{r, eval = FALSE}
+wmds_025_params = data.frame(SimNumber = seq(1, 300000, 1),
+                             Targets = sample(seq(2000, 3500, by=1),300000, replace = T),
+                             Span = sample(seq(25, 100, by=1),300000, replace = T),
+                             Samples = sample(seq(2, 25, by=1),300000, replace = T),
+                             Errors = sample(seq(8, 32, by=1),300000, replace = T),
+                             Offset = runif(300000, -50, 50),
+                             OffsetVaria = runif(300000, 0.001, 26.5))
+
+wmds_025_names <- str_c(oxcal_dir, "Sensitivity025WMDs/Sensitivity025WMDs", 1:300000)
+
+for(i in 1:1){
+  write.table(simulate_wmds(target = wmds_025_params$Targets[i],
+                            span = wmds_025_params$Span[i],
+                            n_Samples = wmds_025_params$Samples[i],
+                            error = wmds_025_params$Errors[i],
+                            offset = wmds_025_params$Offset[i],
+                            offset_sigma = wmds_025_params$OffsetVaria[i]),
+              file = str_c(wmds_025_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", str_c(wmds_025_names[i], ".input")))
+  oxcal_js_stripper(wmds_025_names[i])
+}
+```
+
+
+
+### Uniform bound sequence models
+The uniform bound sequence models assume that the samples were all deposited after a certain date, before a certain date, and calculates these ages. Assumptions on relative chronological relationships can be built in.
+
+#### seqs_031
+Core simulation batch. Explores how model structure, offset magnitudes and model accuracy interact across the dendro-dated tree-ring section of the radiocarbon calibration curve (0 - 12310 cal BP).
+```{r, eval = FALSE}
+seqs_031_params = data.frame(SimNumber = seq(1, 30000, 1),
+                             Targets = sample(seq(251, 12310, by=1),30000, replace = T),
+                             Span = sample(seq(25, 200, by=1),30000, replace = T),
+                             Samples = sample(seq(10, 40, by=1),30000, replace = T),
+                             Phases = sample(seq(1, 10, by  = 1), 30000, replace = T),
+                             Errors = sample(seq(8, 32, by=1),30000, replace = T),
+                             Offset = runif(30000, -50, 50),
+                             OffsetVaria = runif(30000, 0.001, 26.5))
+
+seqs_031_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:30000)
+
+for (i in 1:1) {
+  write.table(simulate_seqs(tsb = seqs_031_params$Targets[i],
+                            span = seqs_031_params$Span[i],
+                            n_samples = seqs_031_params$Samples[i],
+                            error = seqs_031_params$Errors[i],
+                            phases = seqs_031_params$Phases[i],
+                            offset = seqs_031_params$Offset[i],
+                            offset_sigma = seqs_031_params$OffsetVaria[i]
+  ),
+  file = str_c(seqs_031_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", str_c(seqs_031_names[i], ".input")))
+  strip_oxcal_js(seqs_031_names[i])
+}
+```
+
+#### seqs_032
+Explores how uniform bound sequence models simulated from IntCal20 in the period 200 - 1200 cal BP perform when calibrated against IntCal13. Evaluates realistic extent of calibration curve error on 14C model reliability.
+```{r, eval = FALSE}
+seqs_032_params = data.frame(SimNumber = seq(1, 2500, 1),
+                             Targets = sample(seq(251, 1200, by=1),2500, replace = T),
+                             Span = sample(seq(25, 200, by=1),2500, replace = T),
+                             Samples = sample(seq(10, 40, by=1),2500, replace = T),
+                             Phases = sample(seq(1, 10, by  = 1), 2500, replace = T),
+                             Errors = sample(seq(8, 32, by=1),2500, replace = T),
+                             OffsetVaria = runif(2500, 0.001, 26.5))
+
+seqs_032_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:2500)
+
+for (i in 1:1) {
+  write.table(simulate_seqs(tsb = seqs_032_params$Targets[i],
+                            span = seqs_032_params$Span[i],
+                            n_samples = seqs_032_params$Samples[i],
+                            error = seqs_032_params$Errors[i],
+                            phases = seqs_032_params$Phases[i],
+                            offset = 0,
+                            offset_sigma = seqs_032_params$OffsetVaria[i],
+                            curve_to_oxcal = "intcal13Real.14c"
+                            ),
+              file = str_c(seqs_032_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal/bin/OxCalWin.exe", str_c(seqs_032_names[i], ".input")))
+  strip_oxcal_js(seqs_032_names[i])
+}
+```
+
+#### seqs_033
+Evaluates the aof a uniform bound phase model with no systematic offset.
+```{r, eval = FALSE}
+seqs_033_params = data.frame(SimNumber = seq(1, 6000, 1),
+                             Targets = sample(seq(251, 12310, by=1),6000, replace = T),
+                             Span = sample(seq(25, 200, by=1),6000, replace = T),
+                             Samples = sample(seq(5, 40, by=1),6000, replace = T),
+                             Phases = rep(1, 6000),
+                             Errors = sample(seq(8, 32, by=1),6000, replace = T),
+                             OffsetVaria = runif(6000, 0.001, 26.5))
+
+seqs_033_names <- str_c(oxcal_dir, "Sensitivity033Seqs/Sensitivity033Seqs", 1:6000)
+
+for (i in 1:1) {
+  write.table(simulate_seqs(tsb = seqs_033_params$Targets[i],
+                            span = seqs_033_params$Span[i],
+                            n_samples = seqs_033_params$Samples[i],
+                            error = seqs_033_params$Errors[i],
+                            phases = 1,
+                            offset = 0,
+                            offset_sigma = seqs_033_params$OffsetVaria[i]
+  ),
+  file = str_c(seqs_033_names[i], ".input"), row.names = F, quote = F)
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", str_c(seqs_033_names[i], ".input")))
+  strip_oxcal_js(seqs_033_names[i])
+}
+```
+
+
+## Parsing the data from the OxCal .js output files.
+Tools for parsing the information from OxCal output are described in notebook_003_describe_parsing_tools.rmd.
+
+### Parse Wiggle-match Dates
+Note that parsing of the simulation wmds_025 is split into three groups using for loops and a bug spot vector. These are used to trace OxCal output files that lack the information necessary for parsing and amend the parsing algorithms accordingly in a large group of simulations.
+
+```{r, eval = FALSE}
+# Parse WMDs-------------------------------------------------------------------
+wmds_021_results <- assemble_results(wmds_021_names, wmds_021_params, model_type = "wmd")
+write.csv(wmds_021_results, "wmds_021_results.csv")
+
+wmds_022_results <- assemble_results(wmds_022_names, wmds_022_params, model_type = "wmd")
+write.csv(wmds_022_results, "wmds_022_results.csv")
+
+wmds_023_results <- assemble_results(wmds_023_names, wmds_023_params, model_type = "wmd")
+write.csv(wmds_023_results, "wmds_023_results.csv")
+
+wmds_024_results <- assemble_results(wmds_024_names, wmds_024_params, model_type = "wmd")
+write.csv(wmds_024_results, "wmds_024_results.csv")
+
+# Due to size the parsing of wmds 025 is fragmented into three stages and sub-divided.
+# This is to make spotting any issues in the OxCal outputs easy to sort.
+wmds_025_results_100k <- data.frame()
+for (i in 1:100) {
+  bug_spot_100k <- c((((i-1)*1000) +1), (1000*i))
+  wmds_025_results_i <- assemble_results(wmds_025_names[(((i-1)*1000) +1) : (1000*i)],
+                                         wmds_025_params[(((i-1)*1000) +1) : (1000*i),],
+  wmds_025_results_100k <- bind_rows(wmds_025_results_100k, wmds_025_results_i)
+ }
+
+write_csv(wmds_025_results_100k, "wmds_025_results_100k.csv")
+
+wmds_025_results_200k <- data.frame()
+for (i in 101:200) {
+  bug_spot_200k <- c((((i-1)*1000) +1), (1000*i))
+  wmds_025_results_i <- assemble_results(wmds_025_names[(((i-1)*1000) +1) : (1000*i)],
+                                         wmds_025_params[(((i-1)*1000) +1) : (1000*i),],
+                                         model_type = "wmd")
+  wmds_025_results_200k <- bind_rows(wmds_025_results_200k, wmds_025_results_i)
+  }
+
+write_csv(wmds_025_results_200k, "wmds_025_results_200k.csv")
+
+
+wmds_025_results_300k <- data.frame()
+for (i in 201:300) {
+  bug_spot_300k <- c((((i-1)*1000) +1), (1000*i))
+  wmds_025_results_i <- assemble_results(wmds_025_names[(((i-1)*1000) +1) : (1000*i)],
+                                         wmds_025_params[(((i-1)*1000) +1) : (1000*i),],
+                                         model_type = "wmd")
+  wmds_025_results_300k <- bind_rows(wmds_025_results_300k, wmds_025_results_i)
+  }
+write_csv(wmds_025_results_300k, "wmds_025_results_300k.csv")
+
+#Combine wmds 025 results to form a single DF
+wmds_025_results <- bind_rows(wmds_025_results_100k,
+                              wmds_025_results_200k,
+                              wmds_025_results_300k)
+write_csv(wmds_025_results, "wmds_025_results.csv")
+
+```
+
+
+
+
+### Parse Uniform Bound Sequences
+
+```{r, eval = FALSE}
+seqs_031_results <- assemble_results(seqs_031_names, seqs_031_params, model_type = "seq")
+write.csv(seqs_031_results, "seqs_031_results.csv")
+
+seqs_032_results <- assemble_results(seqs_032_names, seqs_032_params, model_type = "seq")
+write.csv(seqs_032_results, "seqs_032_results.csv")
+
+seqs_032_results <- assemble_results(seqs_033_names, seqs_033_params, model_type = "seq")
+write.csv(seqs_033_results, "seqs_033_results.csv")
+```
+
+
+### Reload parameters and names
+If required the parameters and the names can be reloaded using:
+
+```{r, eval = FALSE}
+# Generate simulation name vectors---------------------------------------------
+oxcal_dir <- "C:/Users/Pete.C14/Dropbox/09_OxCal/OxCal01_14CTechnical/201005_SensitivityPaper/"
+
+wmds_021_names <- str_c(oxcal_dir, "Sensitivity021WMDs/Sensitivity021WMDs", 1:60000)
+wmds_022_names <- str_c(oxcal_dir, "Sensitivity022WMDs/Sensitivity022WMDs", 1:5000)
+wmds_023_names <- str_c(oxcal_dir, "Sensitivity023WMDs/Sensitivity023WMDs", 1:20000)
+wmds_024_names <- str_c(oxcal_dir, "Sensitivity024WMDs/Sensitivity024WMDs", 1:20000)
+wmds_025_names <- str_c(oxcal_dir, "Sensitivity025WMDs/Sensitivity025WMDs", 1:300000)
+seqs_031_names <- str_c(oxcal_dir, "Sensitivity031Seqs/Sensitivity031Seqs", 1:30000)
+seqs_032_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:2500)
+seqs_033_names <- str_c(oxcal_dir, "Sensitivity032Seqs/Sensitivity032Seqs", 1:6000)
+
+# Load the simulation parameters-----------------------------------------------
+wmds_021_params <- read_csv("wmds_021_params.csv") %>%
+  mutate(sim_number = SimNumber) %>%
+  select(-X1, - SimNumber)
+
+wmds_022_params <- read_csv("wmds_022_params.csv") %>%
+  mutate(sim_number = SimNumber,##Add the zero values for the parsing algroithm
+         Offset = 0) %>%
+  select(-X1, - SimNumber)
+
+wmds_023_params <- read_csv("wmds_023_params.csv") %>%
+  mutate(sim_number = SimNumber) %>%
+  select(-X1, - SimNumber)
+
+wmds_024_params <- read_csv("wmds_024_params.csv") %>%
+  mutate(sim_number = SimNumber) %>%
+  select(-X1, - SimNumber)
+
+wmds_025_params <- read_csv("wmds_025_params.csv") %>%
+  mutate(sim_number = SimNumber) %>%
+  select(-X1, - SimNumber)
+
+seqs_031_params <- read.csv("seqs_031_params.csv") %>%
+ mutate(sim_number = SimNumber) %>%
+ select(-X, - SimNumber)
+ 
+seqs_032_params <- read.csv("seqs_032_params.csv") %>%
+ mutate(sim_number = SimNumber,
+        Offset = 0) %>%
+ select(- X1, SimNumber)
+
+seqs_033_params <- read.csv("seqs_033_params.csv") %>%
+  mutate(sim_number = SimNumber,
+         Offset = 0) %>%
+  select(- X, SimNumber)
+
+
+```
+
+
+

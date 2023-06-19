@@ -1,0 +1,87 @@
+---
+title: "14C Power/Sensitivity notes"
+author: "Piotr Jacobsson"
+format: html
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+This document contains the research notes from the analysis of the simulations conducted using R and OxCal. This is a rough notebook that begins at the point when the project was re-initiated in June 2023 until completion
+
+##Part 1: make sense of what is here and order things up
+The first thing that I spotted was that much of the data files were sitting right in the main folder. So this will get ordered up - but I'll leave the Markdown files describing everything on top (I might need them lets see if past me had any brains worth of brain :P).
+
+Next will be working out what the individual simulations are and what they cover - as well as taking some time to play with the Shiny App that I built to support the EDA. 
+The thing looks much better now.
+
+Lets have a look at the list of simulations we have.
+
+```{r}
+list_of_sims <- read_csv("sims_list.csv")
+list_of_sims
+```
+There are a few things I could do here. I could start with the single calibrations and take it from there. Not sure what this would contribute though and I'd likely get bored. Also, there is the question of whether I want to keep working with test groups... Still could be fun refreshing what matters and chacking whether the calibration curve has anything to say about accuracy here.
+
+For the wiggle-match dates, there are a few things that could be done. The first is to run models for the steep section and for the plateau and compare results. The interesting thing to do here would maybe be to use Stan while I am at it? The data sets are not that large and even if they turn out to be, I can truncate them. Yes, this could work.
+Of course then there is the 300k project. It covers 1500 years, so the simulation density is 200 sims per year. Here I remember I wanted to go decade by decade, possibly with different regression models and start comparing. So we have options here for accuracy.
+I might leave Sequences out at first pass.
+
+Likewise I think it might be best to focus on accuracy early on - precision can come second. 
+
+Oh and the Shiny will need a batch file. 
+
+Had a quick look at Shiny. Next instalment should likely be some EDA with what I've got in the app and a decision if I want to maybe begin by completing that app.
+
+
+## Part 2: Exploring the single radiocarbon dates with Shiny, and some prelim models
+
+After some reflection I decided to start off with doing some model-based exploration of single calibrations. Using the Shiny App I was able to make some observations that helped.
+
+1. The nominal accuracy was more or less OK for offsets up to about 15 - 25 14C years.
+2. Greater measurement errors seem to mean more accurate dates
+3. Measurements from different parts of the calibration curve may have different susceptibility to offsets. This seems to work different for positive and negative offsets.
+4. Depending on the location on the calibration curve it may be that different offset directions have different effects.
+
+Knowing this, the next step is to explore if any of these initial observations make it through exploratory modelling. The goal is to check is different parts of the calibration curve are comparable when it comes to effects of offset magnitudes and their interactions with measurement error magnitude.
+
+```{r}
+### Load the data
+
+single_cals <- read_csv("simulation_results/singles_011_results.csv")
+
+###Seperate pos from neg offsets and group things by cal curve 
+single_cals_modelled <- single_cals %>%
+  mutate (
+    offset_pos = if_else(offset_magnitude > 0, TRUE, FALSE),
+    binned_targets = ntile(target_year, 50)
+  ) %>%
+  group_by(offset_pos, binned_targets) %>%
+  nest()
+
+
+### Now lets specify a model to test if things work
+offset_only_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude, data = singles_data, family = binomial(link = 'logit'))
+}
+
+
+
+
+### After which we apply the model across the DF and check if everythign works as it should.
+
+single_cal_modelled <- single_cals_modelled %>%
+  mutate(offset_only_acc68 = map(data, offset_only_acc68))
+
+summary(single_cal_modelled$offset_only_acc68[[1]])
+
+
+## Great! Now build remaining models and apply to the DF. 
+
+```
+
+
+
+

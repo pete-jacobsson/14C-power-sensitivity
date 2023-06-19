@@ -1,0 +1,24 @@
+{
+    "id": "A0A31836",
+    "path": "~/Documents/GitHub/14C-power-sensitivity/sensitivity_shiny/server.R",
+    "project_path": "sensitivity_shiny/server.R",
+    "type": "r_source",
+    "hash": "3550011877",
+    "contents": "",
+    "dirty": false,
+    "created": 1686826794832.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1686743747,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1686743747,
+    "read_only": false,
+    "read_only_alternatives": []
+}

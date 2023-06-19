@@ -36,5 +36,52 @@ Oh and the Shiny will need a batch file.
 Had a quick look at Shiny. Next instalment should likely be some EDA with what I've got in the app and a decision if I want to maybe begin by completing that app.
 
 
+## Part 2: Exploring the single radiocarbon dates with Shiny, and some prelim models
+
+After some reflection I decided to start off with doing some model-based exploration of single calibrations. Using the Shiny App I was able to make some observations that helped.
+
+1. The nominal accuracy was more or less OK for offsets up to about 15 - 25 14C years.
+2. Greater measurement errors seem to mean more accurate dates
+3. Measurements from different parts of the calibration curve may have different susceptibility to offsets. This seems to work different for positive and negative offsets.
+4. Depending on the location on the calibration curve it may be that different offset directions have different effects.
+
+Knowing this, the next step is to explore if any of these initial observations make it through exploratory modelling. The goal is to check is different parts of the calibration curve are comparable when it comes to effects of offset magnitudes and their interactions with measurement error magnitude.
+
+```{r}
+### Load the data
+
+single_cals <- read_csv("simulation_results/singles_011_results.csv")
+
+###Seperate pos from neg offsets and group things by cal curve 
+single_cals_modelled <- single_cals %>%
+  mutate (
+    offset_pos = if_else(offset_magnitude > 0, TRUE, FALSE),
+    binned_targets = ntile(target_year, 50)
+  ) %>%
+  group_by(offset_pos, binned_targets) %>%
+  nest()
+
+
+### Now lets specify a model to test if things work
+offset_only_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude, data = singles_data, family = binomial(link = 'logit'))
+}
+
+
+
+
+### After which we apply the model across the DF and check if everythign works as it should.
+
+single_cal_modelled <- single_cals_modelled %>%
+  mutate(offset_only_acc68 = map(data, offset_only_acc68))
+
+summary(single_cal_modelled$offset_only_acc68[[1]])
+
+
+## Great! Now build remaining models and apply to the DF. 
+
+```
+
+
 
 

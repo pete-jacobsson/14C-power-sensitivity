@@ -1,0 +1,28 @@
+{
+    "id": "0030E9AD",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1687173180786.0,
+    "source_on_save": false,
+    "relative_order": 10,
+    "properties": {
+        "id": "a34015d5cdb5456787358f55ac32adcb",
+        "name": "single_cal_modelled[[4]][[1]]",
+        "title": "single_cal_modelled[[4]][[1]]",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2019029972269662259,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1687173180786,
+    "read_only": false,
+    "read_only_alternatives": []
+}
