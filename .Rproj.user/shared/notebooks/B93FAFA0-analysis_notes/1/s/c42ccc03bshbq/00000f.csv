@@ -3,7 +3,7 @@
 "0",""
 "0","offset_only_acc68 <- function(singles_data) {"
 "0","  glm(accuracy_68 ~ offset_magnitude, data = singles_data, "
-"0","      family = binomial(link = 'logit'))"
+"0","      family = binomial)"
 "0","}"
 "0",""
 "0","sigma_only_acc68 <- function(singles_data) {"

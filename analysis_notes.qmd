@@ -90,7 +90,7 @@ In this step I want to fit multiple logistic regressions to single calibrations 
 
 offset_only_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ offset_magnitude, data = singles_data, 
-      family = binomial(link = 'logit'))
+      family = binomial)
 }
 
 sigma_only_acc68 <- function(singles_data) {
@@ -159,6 +159,56 @@ single_cals_model_results <- single_cals_modelled %>%
 
 
 ```
+
+
+## Part 4: Unpack the ensted lists and re-organize the DFs
+
+Right now I have one DF with a lot of nested models. These need unpacked and re-organized into a new DF if they are to be visualizable (which is our objective after all!).
+
+Lets try to loop through the unpacking and then create two DFs - one for parameters and one for model quality indicators. That would also be a good point to save the DFs into csv files (so we don't need to keep re-building them each time we re-visit the data).
+
+```{r}
+model_names <- colnames(single_cals_modelled)[4:11]
+
+single_cals_log_results <- data.frame()
+single_cals_log_diagnostics <- data.frame()
+
+for (model in model_names) {
+  ## This will get a little experimental - we are trying to create a big old table!
+  ## First, we thin down the DF to the model of interest
+  temp_results <- single_cals_modelled %>%
+    select(1, 2, model) %>%
+    rename(glm_list = 3) %>% #This rename allows map to work correctly
+    mutate(
+      logistic_results = map(glm_list, tidy),
+      model = model
+    ) %>%
+    select(-glm_list) %>%
+    unnest(logistic_results)
+  
+  temp_diagnostics <- single_cals_modelled %>%
+    select(1, 2, model) %>%
+    rename(glm_list = 3) %>%
+    mutate(
+      logistic_diagnostics = map(glm_list, glance),
+      model = model
+    ) %>%
+    select(-glm_list) %>%
+    unnest(logistic_diagnostics)
+  
+  single_cals_log_results <- rbind(single_cals_log_results, temp_results)
+  single_cals_log_diagnostics <- rbind(single_cals_log_diagnostics, 
+                                       temp_diagnostics)
+
+}
+
+write_csv(single_cals_log_results, "model_results/single_cals_log_results.csv")
+write_csv(single_cals_log_diagnostics, "model_results/single_cals_log_diagnostics.csv")
+
+```
+
+
+
 
 
 
