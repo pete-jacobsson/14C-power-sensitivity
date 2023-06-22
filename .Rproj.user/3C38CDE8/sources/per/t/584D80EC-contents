@@ -202,12 +202,105 @@ for (model in model_names) {
 
 }
 
+### Add bit here for getting the cal years!
+
+
 write_csv(single_cals_log_results, "model_results/single_cals_log_results.csv")
-write_csv(single_cals_log_diagnostics, "model_results/single_cals_log_diagnostics.csv")
+write_csv(single_cals_log_diagnostics, 
+          "model_results/single_cals_log_diagnostics.csv")
 
 ```
 
 
+
+## Part 5: Start plotting what all the results mean :D
+
+There are two things we are interested in here. First is, how do different parameters for different models vary with time. Second, what are the model quality indicators. I'll start by looking at the latter, more specifically at AIC and BIC values.
+
+```{r}
+single_cals_log_diagnostics <- read_csv("model_results/single_cals_log_diagnostics.csv")
+single_cals_log_diagnostics <- inner_join(single_cals_log_diagnostics, bin_min_year)
+```
+```{r}
+
+## Lets make some plots
+single_cals_log_diagnostics %>%
+  filter(str_detect(model, "68")) %>%
+  ggplot(aes(x = bin_start, y = AIC)) +
+  geom_line(aes(color = model)) +
+  facet_wrap(~offset_pos) +
+  theme_bw()
+
+
+single_cals_log_diagnostics %>%
+  filter(str_detect(model, "68")) %>%
+  ggplot(aes(x = bin_start, y = BIC)) +
+  geom_line(aes(color = model)) +
+  facet_wrap(~offset_pos) +
+  theme_bw()
+
+single_cals_log_diagnostics %>%
+  filter(str_detect(model, "95")) %>%
+  ggplot(aes(x = bin_start, y = AIC)) +
+  geom_line(aes(color = model)) +
+  facet_wrap(~offset_pos) +
+  theme_bw()
+
+
+single_cals_log_diagnostics %>%
+  filter(str_detect(model, "95")) %>%
+  ggplot(aes(x = bin_start, y = BIC)) +
+  geom_line(aes(color = model)) +
+  facet_wrap(~offset_pos) +
+  theme_bw()
+
+
+  
+```
+
+There are a few things to note here. 
+First, as expected the Sigme-only model performs worst of the whole group.
+
+Second, the remaining models are close to each other in performance, with the interaction model performing marginally better with respect to AIC and the offset only model performaing little better with respect to BIC
+
+Third, the model AIC and BIC varies with the set of target dates - suggesting that the performance of logistic regression varies depending on the shape of the calibration curve at a given segment of time. Lets explore if we can find a pattern by adding in calibration curve information and drawing some scatter plots.
+
+```{r}
+cal_curve_binned <- read_csv("intcal_20_interpolated.csv") %>%
+  mutate(binned_targets = ntile(CalBP, 50)) %>%
+  group_by(binned_targets) %>%
+  summarize(bp_sd = sd(BP)) # Cal plateaus = way less variation on the BP scale
+
+inner_join(single_cals_log_diagnostics, cal_curve_binned) %>%
+  filter(str_detect(model, "68")) %>%
+  ggplot(aes(x = bp_sd, y = AIC)) +
+  geom_point(aes(colour = model)) +
+  facet_wrap(~model)
+  
+```
+So there is no pattern here at first sight. What we will want to do in this case is to re-do the simulation to confirm that the AIC shape remains stable. If so, we can take another pass looking at whether we can define a good metric for cal curve variability (if we are thus inclined).
+
+
+
+Fourth - and that's the interesting part - the AIC/BIC behavior differs between the models for the 68% HPD areas and 95% HPD areas. For the former, while variable, we see no overall trend and the sigma_only model has higher AIC/BIC. The 95% HPD models have a clear downward trend and a much smaller gap between the AIC/BICs for different model types. The small gap implies is that, for the 95% models, measurement error alone is almost as good as knowing the offset magnitude at calling whether the result is off-target or not. This is something that will require some more digging into. Second, all models become better as we go back in time for the 95%. As the main difference is in the precision of the calibration curve, this implies that curve ucnertainty may play a role in how well a logistic regression will predict model fit. 
+
+
+With these ideas now in mind, lets have a look at how different points in time compare. At first, we shall use the interaction model to investigate (it has best AIC and also makes most sense logically).
+
+```{r}
+single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv") %>%
+  inner_join(bin_min_year)
+```
+
+
+
+```{r}
+single_cals_log_results %>%
+  filter(str_detect(model, "interact") & !str_detect(term, "Intercept")) %>%
+  ggplot(aes(x = bin_start, y = estimate)) +
+  geom_line(aes(color = term)) +
+  facet_grid(rows = vars(offset_pos), cols = vars(model))
+```
 
 
 
