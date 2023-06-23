@@ -1,7 +1,0 @@
-"0","inner_join(single_cals_log_diagnostics, cal_curve_binned) %>%
-  filter(str_detect(model, ""68"")) %>%
-  ggplot(aes(x = bp_sd, y = AIC)) +
-  geom_point(aes(colour = model)) +
-  facet_wrap(~model)
-"
-"2","Joining with `by = join_by(binned_targets)`"

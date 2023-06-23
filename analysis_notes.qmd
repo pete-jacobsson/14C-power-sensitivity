@@ -57,16 +57,29 @@ single_cals <- read_csv("simulation_results/singles_011_results.csv")
 single_cals_modelled <- single_cals %>%
   mutate (
     offset_pos = if_else(offset_magnitude > 0, TRUE, FALSE),
+    offset_magnitude = if_else(offset_pos, 
+                               offset_magnitude, offset_magnitude * -1),
+    # Changing negs on offset magnitude to have a consistent direction at downstream visualization.
     binned_targets = ntile(target_year, 50)
   ) %>%
-  group_by(offset_pos, binned_targets) %>%
+  select(-target_year)
+
+
+single_cals_modelled <- single_cals %>%
+  mutate(binned_targets = ntile(target_year, 50)) %>%
+  group_by(binned_targets) %>%
+  summarize( #Easy way to get years for the indiv bins, without too muchj headach
+    target_year = min(target_year)
+    ) %>%
+  inner_join(single_cals_modelled) %>% #Join the binned DF back in. No, I don't like this either!
+  group_by(offset_pos, target_year) %>%
   nest()
 
 
 ### Now lets specify a model to test if things work
-offset_only_acc68 <- function(singles_data) {
-  glm(accuracy_68 ~ offset_magnitude, data = singles_data, family = binomial(link = 'logit'))
-}
+# offset_only_acc68 <- function(singles_data) {
+#   glm(accuracy_68 ~ offset_magnitude, data = singles_data, family = binomial(link = 'logit'))
+# }
 
 ### After which we apply the model across the DF and check if everythign works as it should.
 
@@ -151,16 +164,6 @@ single_cals_modelled <- single_cals_modelled %>%
 ```
 
 
-```{r}
-### Now its time to start getting summaries and model quality
-
-single_cals_model_results <- single_cals_modelled %>%
-  mutate()
-
-
-```
-
-
 ## Part 4: Unpack the ensted lists and re-organize the DFs
 
 Right now I have one DF with a lot of nested models. These need unpacked and re-organized into a new DF if they are to be visualizable (which is our objective after all!).
@@ -177,17 +180,17 @@ for (model in model_names) {
   ## This will get a little experimental - we are trying to create a big old table!
   ## First, we thin down the DF to the model of interest
   temp_results <- single_cals_modelled %>%
-    select(1, 2, model) %>%
+    select(1, 2, all_of(model)) %>% #All of used to address deprecation
     rename(glm_list = 3) %>% #This rename allows map to work correctly
     mutate(
-      logistic_results = map(glm_list, tidy),
+      logistic_results = map(glm_list, tidy), # Do the map and also take note of which model
       model = model
     ) %>%
-    select(-glm_list) %>%
-    unnest(logistic_results)
+    select(-glm_list) %>% # Gets rid of the actual models (necessary for saving as csv)
+    unnest(logistic_results)# Unnests results
   
   temp_diagnostics <- single_cals_modelled %>%
-    select(1, 2, model) %>%
+    select(1, 2, all_of(model)) %>%
     rename(glm_list = 3) %>%
     mutate(
       logistic_diagnostics = map(glm_list, glance),
@@ -202,10 +205,9 @@ for (model in model_names) {
 
 }
 
-### Add bit here for getting the cal years!
 
-
-write_csv(single_cals_log_results, "model_results/single_cals_log_results.csv")
+write_csv(single_cals_log_results, 
+          "model_results/single_cals_log_results.csv")
 write_csv(single_cals_log_diagnostics, 
           "model_results/single_cals_log_diagnostics.csv")
 
@@ -219,14 +221,15 @@ There are two things we are interested in here. First is, how do different param
 
 ```{r}
 single_cals_log_diagnostics <- read_csv("model_results/single_cals_log_diagnostics.csv")
-single_cals_log_diagnostics <- inner_join(single_cals_log_diagnostics, bin_min_year)
+
 ```
+
 ```{r}
 
 ## Lets make some plots
 single_cals_log_diagnostics %>%
   filter(str_detect(model, "68")) %>%
-  ggplot(aes(x = bin_start, y = AIC)) +
+  ggplot(aes(x = target_year, y = AIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
   theme_bw()
@@ -234,14 +237,14 @@ single_cals_log_diagnostics %>%
 
 single_cals_log_diagnostics %>%
   filter(str_detect(model, "68")) %>%
-  ggplot(aes(x = bin_start, y = BIC)) +
+  ggplot(aes(x = target_year, y = BIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
   theme_bw()
 
 single_cals_log_diagnostics %>%
   filter(str_detect(model, "95")) %>%
-  ggplot(aes(x = bin_start, y = AIC)) +
+  ggplot(aes(x = target_year, y = AIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
   theme_bw()
@@ -249,7 +252,7 @@ single_cals_log_diagnostics %>%
 
 single_cals_log_diagnostics %>%
   filter(str_detect(model, "95")) %>%
-  ggplot(aes(x = bin_start, y = BIC)) +
+  ggplot(aes(x = target_year, y = BIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
   theme_bw()
@@ -269,7 +272,13 @@ Third, the model AIC and BIC varies with the set of target dates - suggesting th
 cal_curve_binned <- read_csv("intcal_20_interpolated.csv") %>%
   mutate(binned_targets = ntile(CalBP, 50)) %>%
   group_by(binned_targets) %>%
-  summarize(bp_sd = sd(BP)) # Cal plateaus = way less variation on the BP scale
+  summarize(
+    bp_sd = sd(BP),
+    target_year = min(CalBP)) %>%
+  select(-binned_targets)# Cal plateaus = way less variation on the BP scale
+
+###Errors here. Re-work to ensure match!
+
 
 inner_join(single_cals_log_diagnostics, cal_curve_binned) %>%
   filter(str_detect(model, "68")) %>%
@@ -288,8 +297,7 @@ Fourth - and that's the interesting part - the AIC/BIC behavior differs between 
 With these ideas now in mind, lets have a look at how different points in time compare. At first, we shall use the interaction model to investigate (it has best AIC and also makes most sense logically).
 
 ```{r}
-single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv") %>%
-  inner_join(bin_min_year)
+single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv")
 ```
 
 
@@ -297,9 +305,9 @@ single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv")
 ```{r}
 single_cals_log_results %>%
   filter(str_detect(model, "interact") & !str_detect(term, "Intercept")) %>%
-  ggplot(aes(x = bin_start, y = estimate)) +
+  ggplot(aes(x = target_year, y = estimate)) +
   geom_line(aes(color = term)) +
-  facet_grid(rows = vars(offset_pos), cols = vars(model))
+  facet_grid(cols = vars(offset_pos), rows = vars(model), scales = "free")
 ```
 
 

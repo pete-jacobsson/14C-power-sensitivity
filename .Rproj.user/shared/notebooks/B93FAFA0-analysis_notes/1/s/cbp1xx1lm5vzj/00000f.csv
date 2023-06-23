@@ -1,0 +1,8 @@
+"0",""
+"0","## Lets make some plots"
+"0","single_cals_log_diagnostics %>%"
+"0","  filter(str_detect(model, ""68"")) %>%"
+"0","  ggplot(aes(x = target_year, y = AIC)) +"
+"0","  geom_line(aes(color = model)) +"
+"0","  facet_wrap(~offset_pos) +"
+"0","  theme_bw()"

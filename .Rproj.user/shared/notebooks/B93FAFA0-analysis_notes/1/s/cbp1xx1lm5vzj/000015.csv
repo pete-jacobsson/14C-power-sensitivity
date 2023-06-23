@@ -1,0 +1,8 @@
+"0",""
+"0",""
+"0","single_cals_log_diagnostics %>%"
+"0","  filter(str_detect(model, ""95"")) %>%"
+"0","  ggplot(aes(x = target_year, y = BIC)) +"
+"0","  geom_line(aes(color = model)) +"
+"0","  facet_wrap(~offset_pos) +"
+"0","  theme_bw()"
