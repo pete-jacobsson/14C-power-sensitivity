@@ -5,4 +5,6 @@
 "0","  ggplot(aes(x = target_year, y = AIC)) +"
 "0","  geom_line(aes(color = model)) +"
 "0","  facet_wrap(~offset_pos) +"
-"0","  theme_bw()"
+"0","  theme_bw() +"
+"0","  scale_color_manual(values = c(""grey10"", ""grey30"", ""grey50"", ""darkviolet"")) +"
+"0","  theme(panel.grid.minor = element_blank())"

@@ -232,7 +232,9 @@ single_cals_log_diagnostics %>%
   ggplot(aes(x = target_year, y = AIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
-  theme_bw()
+  theme_bw() +
+  scale_color_manual(values = c("grey10", "grey30", "grey50", "darkviolet")) +
+  theme(panel.grid.minor = element_blank())
 
 
 single_cals_log_diagnostics %>%
@@ -240,14 +242,18 @@ single_cals_log_diagnostics %>%
   ggplot(aes(x = target_year, y = BIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
-  theme_bw()
+  theme_bw() +
+  scale_color_manual(values = c("grey10", "grey30", "grey50", "darkviolet")) +
+  theme(panel.grid.minor = element_blank())
 
 single_cals_log_diagnostics %>%
   filter(str_detect(model, "95")) %>%
   ggplot(aes(x = target_year, y = AIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
-  theme_bw()
+  theme_bw()+
+  scale_color_manual(values = c("grey10", "grey30", "grey50", "darkviolet")) +
+  theme(panel.grid.minor = element_blank())
 
 
 single_cals_log_diagnostics %>%
@@ -255,7 +261,9 @@ single_cals_log_diagnostics %>%
   ggplot(aes(x = target_year, y = BIC)) +
   geom_line(aes(color = model)) +
   facet_wrap(~offset_pos) +
-  theme_bw()
+  theme_bw() +
+  scale_color_manual(values = c("grey10", "grey30", "grey50", "darkviolet")) +
+  theme(panel.grid.minor = element_blank())
 
 
   
@@ -269,22 +277,47 @@ Second, the remaining models are close to each other in performance, with the in
 Third, the model AIC and BIC varies with the set of target dates - suggesting that the performance of logistic regression varies depending on the shape of the calibration curve at a given segment of time. Lets explore if we can find a pattern by adding in calibration curve information and drawing some scatter plots.
 
 ```{r}
-cal_curve_binned <- read_csv("intcal_20_interpolated.csv") %>%
-  mutate(binned_targets = ntile(CalBP, 50)) %>%
-  group_by(binned_targets) %>%
+## Can't just bin cal curve. Does not match well
+## First get cal curve and min/max for the actual bins
+
+cal_curve <- read_csv("intcal_20_interpolated.csv")
+
+binned_sim_yrs <- single_cals %>%
+  mutate(bin_yrs = ntile(target_year, 50)) %>%
+  group_by(bin_yrs) %>%
   summarize(
-    bp_sd = sd(BP),
-    target_year = min(CalBP)) %>%
-  select(-binned_targets)# Cal plateaus = way less variation on the BP scale
+    bin_end = max(target_year),
+    target_year = min(target_year)
+    
+  )
+
+## Now loop through each bin, and get BP sd for that group of years - a proxy for how variable the cal curve was (less = more plateau)
+bp_sd <- c()
+
+for (i in 1:nrow(binned_sim_yrs)) {
+  binned_sd <- cal_curve %>%
+    filter(CalBP >= binned_sim_yrs$target_year[i] & 
+             CalBP <= binned_sim_yrs$bin_end[i]) %>%
+    summarize(bin_sd = sd(BP)) %>%
+    pull(bin_sd)
+  
+  bp_sd <- c(bp_sd, binned_sd)
+}
+
+binned_sim_yrs <- cbind(binned_sim_yrs, bp_sd) %>%
+  select(target_year, bp_sd)
 
 ###Errors here. Re-work to ensure match!
 
 
-inner_join(single_cals_log_diagnostics, cal_curve_binned) %>%
+inner_join(single_cals_log_diagnostics, binned_sim_yrs) %>%
   filter(str_detect(model, "68")) %>%
   ggplot(aes(x = bp_sd, y = AIC)) +
   geom_point(aes(colour = model)) +
-  facet_wrap(~model)
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("grey10", "grey30", "grey50", "darkviolet")) +
+  theme(panel.grid.minor = element_blank())
   
 ```
 So there is no pattern here at first sight. What we will want to do in this case is to re-do the simulation to confirm that the AIC shape remains stable. If so, we can take another pass looking at whether we can define a good metric for cal curve variability (if we are thus inclined).
@@ -306,8 +339,13 @@ single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv")
 single_cals_log_results %>%
   filter(str_detect(model, "interact") & !str_detect(term, "Intercept")) %>%
   ggplot(aes(x = target_year, y = estimate)) +
-  geom_line(aes(color = term)) +
-  facet_grid(cols = vars(offset_pos), rows = vars(model), scales = "free")
+  geom_ribbon(aes(ymin = estimate - std.error * 2, 
+                  ymax = estimate + std.error * 2,
+                  fill = term), alpha = 0.2, color = "grey75") +
+  geom_line(aes(color = term), linetype = "dotted") +
+  facet_grid(cols = vars(offset_pos), rows = vars(model), scales = "free") +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank())
 ```
 
 
