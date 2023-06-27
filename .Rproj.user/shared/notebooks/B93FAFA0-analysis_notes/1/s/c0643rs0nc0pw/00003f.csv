@@ -21,4 +21,5 @@
 "0","     ),"
 "0","     text = element_text(family = ""Corbel"")"
 "0","    ) +"
-"0","  scale_fill_manual(values = c(""steelblue"", ""grey50"", ""darkblue"")) "
+"0","  scale_fill_manual(name = ""Parameter"", values = c(""steelblue"", ""grey50"", ""darkblue"")) +"
+"0","  scale_color_discrete(name = ""Parameter"")"

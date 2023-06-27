@@ -241,7 +241,9 @@ single_cals_log_diagnostics %>%
     panel.grid.minor = element_blank(),
     strip.background = element_rect(
      color="black", fill="white"
-     )) +
+     ),
+     text = element_text(family = "Corbel")
+    ) +
   labs(x = "Cal yrs BP")
 
 
@@ -259,7 +261,9 @@ single_cals_log_diagnostics %>%
     panel.grid.minor = element_blank(),
     strip.background = element_rect(
      color="black", fill="white"
-     )) +
+     ),
+     text = element_text(family = "Corbel")
+    )) +
   labs(x = "Cal yrs BP")
 
 single_cals_log_diagnostics %>%
@@ -276,7 +280,9 @@ single_cals_log_diagnostics %>%
     panel.grid.minor = element_blank(),
     strip.background = element_rect(
      color="black", fill="white"
-     )) +
+     ),
+     text = element_text(family = "Corbel")
+    )) +
   labs(x = "Cal yrs BP")
 
 
@@ -294,7 +300,9 @@ single_cals_log_diagnostics %>%
     panel.grid.minor = element_blank(),
     strip.background = element_rect(
      color="black", fill="white"
-     )) +
+     ),
+     text = element_text(family = "Corbel")
+    )) +
   labs(x = "Cal yrs BP")
 
 
@@ -302,7 +310,7 @@ single_cals_log_diagnostics %>%
 ```
 
 There are a few things to note here. 
-First, as expected the Sigme-only model performs worst of the whole group.
+First, as expected the Sigma-only model performs worst of the whole group.
 
 Second, the remaining models are close to each other in performance, with the interaction model performing marginally better with respect to AIC and the offset only model performaing little better with respect to BIC
 
@@ -359,7 +367,7 @@ So there is no pattern here at first sight. What we will want to do in this case
 Fourth - and that's the interesting part - the AIC/BIC behavior differs between the models for the 68% HPD areas and 95% HPD areas. For the former, while variable, we see no overall trend and the sigma_only model has higher AIC/BIC. The 95% HPD models have a clear downward trend and a much smaller gap between the AIC/BICs for different model types. The small gap implies is that, for the 95% models, measurement error alone is almost as good as knowing the offset magnitude at calling whether the result is off-target or not. This is something that will require some more digging into. Second, all models become better as we go back in time for the 95%. As the main difference is in the precision of the calibration curve, this implies that curve ucnertainty may play a role in how well a logistic regression will predict model fit. 
 
 
-With these ideas now in mind, lets have a look at how different points in time compare. At first, we shall use the interaction model to investigate (it has best AIC and also makes most sense logically).
+With these ideas now in mind, lets have a look at how different points in time compare. At first, we shall use the interaction model to investigate (it has best AIC and also makes most sense logically - but lets see the outcomes first).
 
 ```{r}
 single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv")
@@ -388,8 +396,11 @@ single_cals_log_results %>%
     panel.grid.minor = element_blank(),
     strip.background = element_rect(
      color="black", fill="white"
-     )) +
-  scale_fill_manual(values = c("steelblue", "grey50", "darkblue")) 
+     ),
+     text = element_text(family = "Corbel")
+    ) +
+  scale_fill_manual(name = "Parameter", values = c("steelblue", "grey50", "darkblue")) +
+  scale_color_discrete(name = "Parameter")
 ```
 
 Some quick notes.
@@ -401,11 +412,13 @@ single_cals_log_results %>%
   filter(std.error >0.75 & !str_detect(term, "tercept"))
 ```
 
-There are a few observations at hand here. First, there were some extreme values for the models covering the 95% HPD range. These have been removed from the figure, but likely correspond to the models that did not want to converge (see warnings up top!).
+There are a few observations at hand here. 
 
-Second, we can see that the 95% models have much greater uncertainties than the 68% models - in other words they are not as good precise as the estimates from the 68% HPD ranges. This does make sense - the 95% ranges will have a much greater number of on-terget estimates than the 68% ranges - therefore being more difficult to treat with logistic regression. 
+_First_, there were some extreme values for the models covering the 95% HPD range. These have been removed from the figure, but likely correspond to the models that did not want to converge (see warnings up top!).
 
-Third, while we see some variation in regression parameters through time, instances where the means of the parameters differ by more than two SDs are few and far apart - as we can visualize for the 68% models on the figure below.
+_Second_, we can see that the 95% models have much greater uncertainties than the 68% models - in other words they are not as good precise as the estimates from the 68% HPD ranges. This does make sense - the 95% ranges will have a much greater number of on-terget estimates than the 68% ranges - therefore being more difficult to treat with logistic regression. 
+
+_Third_, while we see some variation in regression parameters through time, instances where the means of the parameters differ by more than two SDs are few and far apart - as we can visualize for the 68% models on the figure below.
 ```{r}
 ## Do something for loopy here.
 ```
@@ -413,5 +426,34 @@ Third, while we see some variation in regression parameters through time, instan
 
 
 
-Last, we see that the interaction parameter is very close to zero. This implies we could get similar results by using a simpler model; while 
+_Fourth_, we see that the interaction parameter is very close to zero. This implies we could get similar results by using a simpler model. I find this very counter-intuitive - I suspect that the term for impacts of measurement precision (measurement_error) might start turning the other way, i.e. right now the measurement error estimates tend to imply that increasing the measurement error deteriorates the accuracy of the calibrated date models. Lets see if this will remain the case under different model specifications. Lets also check how this will affect the offset parameter under the different models. As the effects are greater under the 68% HPD models, this is where I'll focus attention.
 
+```{r}
+single_cals_log_results %>%
+  filter(!str_detect(model, "95") & 
+           !str_detect(model, "sigma_only") & 
+           !str_detect(term, "Intercept") & 
+           !str_detect(term, "error:offset")) %>%  ## This removes extreme values of the 95% model in the visualizations
+  mutate(
+    offset_pos = if_else(offset_pos, "Pos offset", "Neg offset")
+    )%>%
+  ggplot(aes(x = target_year, y = estimate)) +
+  geom_hline(yintercept = 0, size = 0.5) +
+  geom_ribbon(aes(ymin = estimate - std.error * 2, 
+                  ymax = estimate + std.error * 2,
+                  fill = model), alpha = 0.2, color = "grey75") +
+  geom_line(aes(color = model)) +
+  facet_grid(cols = vars(offset_pos), rows = vars(term)) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    strip.background = element_rect(
+     color="black", fill="white"
+     ),
+     text = element_text(family = "Corbel")
+    ) +
+  scale_fill_manual(name = "Model", values = c("steelblue", "grey50", "darkblue")) +
+  scale_color_discrete(name = "Model")
+```
+
+OK, suspicion confirmed. What we see here is that the models without the interaction terms are on the one hand much more precise as far as their estimates go, but on the other hand, the parameter for the measurement error does indeed flip sigm - in the interaction models its mean is negative (implies greater scatter of estimates leads to greater chance of measurement being off target), while in the non-interaction models it is positive - implying that greater measurement uncertainty leads to greater precision. Now, we know that in the case of zero offset from the mean of the calibration curve, a super-precise determination would almost always fit within the uncertainty of the calibration curve - and therefore return more accurate results. As such, due to underpinning maths, the interaction model is a better description of reality even if the interaction term itself is centered around zero and the overall parameter estimate uncertainties are far higher.
