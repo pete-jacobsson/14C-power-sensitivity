@@ -403,7 +403,7 @@ single_cals_log_results %>%
 
 There are a few observations at hand here. First, there were some extreme values for the models covering the 95% HPD range. These have been removed from the figure, but likely correspond to the models that did not want to converge (see warnings up top!).
 
-Second, we can see that the 95% models have much greater ucnertainties than the 68% models - in other words they are not as good precise as the estimates from the 68% HPD ranges. This does make sense - the 95% ranges will have a much greater number of on-terget estimates than the 68% ranges - therefore being more difficult to treat with logistic regression. 
+Second, we can see that the 95% models have much greater uncertainties than the 68% models - in other words they are not as good precise as the estimates from the 68% HPD ranges. This does make sense - the 95% ranges will have a much greater number of on-terget estimates than the 68% ranges - therefore being more difficult to treat with logistic regression. 
 
 Third, while we see some variation in regression parameters through time, instances where the means of the parameters differ by more than two SDs are few and far apart - as we can visualize for the 68% models on the figure below.
 ```{r}
@@ -411,4 +411,7 @@ Third, while we see some variation in regression parameters through time, instan
 ```
 
 
+
+
+Last, we see that the interaction parameter is very close to zero. This implies we could get similar results by using a simpler model; while 
 
