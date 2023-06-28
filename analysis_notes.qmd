@@ -442,6 +442,15 @@ neg_error_chi <- c()
 neg_interact_dif <- c()
 neg_interact_chi <- c()
 
+pos_offset_dif <- c()
+pos_offset_chi <- c()
+pos_intercept_dif <- c()
+pos_intercept_chi <- c()
+pos_error_dif <- c()
+pos_error_chi <- c()
+pos_interact_dif <- c()
+pos_interact_chi <- c()
+
 
 ```
 
