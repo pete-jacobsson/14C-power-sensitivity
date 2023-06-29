@@ -451,7 +451,21 @@ pos_error_chi <- c()
 pos_interact_dif <- c()
 pos_interact_chi <- c()
 
+for (i in 2:100) {
+  ## Yes we're doing this with a for loop, using the knowledge that the tables have 100 observations each.
+  neg_offset_mu_curr <- single_cals_log_results_wider_neg$estimate_offset_magnitude[i]
+  neg_offset_mu_prev <- single_cals_log_results_wider_neg$estimate_offset_magnitude[i-1]
+  
+  neg_offset_sd_curr <- single_cals_log_results_wider_neg$std.error_offset_magnitude[i]
+  neg_offset_sd_prev <- single_cals_log_results_wider_neg$std.error_offset_magnitude[i-1]
+  
+  neg_offset_norm_dif <- (neg_offset_mu_curr - neg_offset_mu_prev) /
+                         sqrt((neg_offset_sd_curr^2 + neg_offset_sd_prev^2) / 2)
+  neg_offset_dif <- c(neg_offset_dif, neg_offset_norm_dif)
+  
+}
 
+neg_offset_dif
 ```
 
 
