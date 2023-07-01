@@ -1,2 +1,0 @@
-"0","single_cals_log_results %>%"
-"0","  filter(std.error >0.75 & !str_detect(term, ""tercept""))"

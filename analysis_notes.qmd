@@ -421,8 +421,7 @@ _First_, there were some extreme values for the models covering the 95% HPD rang
 
 _Second_, we can see that the 95% models have much greater uncertainties than the 68% models - in other words they are not as good precise as the estimates from the 68% HPD ranges. This does make sense - the 95% ranges will have a much greater number of on-terget estimates than the 68% ranges - therefore being more difficult to treat with logistic regression. 
 
-_Third_, we see some variation in regression parameters through time. To decide whether it is meaningful in the context of the current sample, we need to check if the estimates from year to year are different enough from one another. There are two ways we could do it. One is to run Chi-squared tests to compare the two distributions. This would be more mathematically cohesive. Second way is to see if the parameter means are more than two standard deviations from one another - which gives us an estimate of how big the differences are. It would be prudent to do both, so this is what we will focus on here. 
-
+_Third_, we see some variation in regression parameters through time. To decide whether it is meaningful in the context of the current sample, we need to check if the estimates from year to year are different enough from one another. We'll build a Z-test.
 ```{r}
 ## this will get a little messy. In order for the thing to work efficiently, it will be easier to pivot the table wider
 single_cals_log_results_wider_pos <- single_cals_log_results %>%
@@ -436,44 +435,7 @@ single_cals_log_results_wider_neg <- single_cals_log_results %>%
   pivot_wider(names_from = term, values_from = c(estimate, std.error))
 ```
 
-```{r}
-## Now lets figure out the for loops to create what we're after. While there likely is a smarter way of doing this, given the size of the data, for loop will work just fine. There will be a whole bunch of vectors that we will end up filling up with the differences between rows and then putting into a single DF for visualization.
 
-# neg_offset_dif <- c()
-# neg_offset_chi <- c()
-# neg_intercept_dif <- c()
-# neg_intercept_chi <- c()
-# neg_error_dif <- c()
-# neg_error_chi <- c()
-# neg_interact_dif <- c()
-# neg_interact_chi <- c()
-# 
-# pos_offset_dif <- c()
-# pos_offset_chi <- c()
-# pos_intercept_dif <- c()
-# pos_intercept_chi <- c()
-# pos_error_dif <- c()
-# pos_error_chi <- c()
-# pos_interact_dif <- c()
-# pos_interact_chi <- c()
-# 
-# for (i in 2:100) {
-#   ## Yes we're doing this with a for loop, using the knowledge that the tables have 100 observations each.
-#   neg_offset_mu_curr <- single_cals_log_results_wider_neg$estimate_offset_magnitude[i]
-#   neg_offset_mu_prev <- single_cals_log_results_wider_neg$estimate_offset_magnitude[i-1]
-#   
-#   neg_offset_sd_curr <- single_cals_log_results_wider_neg$std.error_offset_magnitude[i]
-#   neg_offset_sd_prev <- single_cals_log_results_wider_neg$std.error_offset_magnitude[i-1]
-#   
-#   neg_offset_norm_dif <- (neg_offset_mu_curr - neg_offset_mu_prev) /
-#                          sqrt((neg_offset_sd_curr^2 + neg_offset_sd_prev^2) / 2)
-#   neg_offset_dif <- c(neg_offset_dif, neg_offset_norm_dif)
-#   
-# }
-# 
-# neg_offset_dif
-## Kill this, too ugly to work
-```
 
 ```{r}
 #### I'm leaving the above for posterity to see the error of my ways.... this approach is too ugly. What we really need is two functions that will produce the vectors required. An estimate difference calculator and a chi squared estimator. What they'll need to do is to take on a vector of estimates, a vector of standard deviations and return a vector of the desired type of results.
@@ -493,7 +455,7 @@ estimate_running_diff <- function(estimates, stdevs) {
     stdev_prev <- stdevs[i-1]
     
     estimate_diff <- (estimate_curr - estimate_prev) /
-                     (sqrt((stdev_curr^2 + stdev_prev^2)/2))
+                     (sqrt(stdev_curr^2 + stdev_prev^2))
     
     difs <- c(difs, estimate_diff)
   }
