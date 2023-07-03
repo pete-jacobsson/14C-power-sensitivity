@@ -376,8 +376,38 @@ With these ideas now in mind, lets have a look at how different points in time c
 single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv")
 ```
 
+First lets plot the intercept
+
+```{r}
+single_cals_log_results %>%
+  filter(str_detect(model, "interact") & str_detect(term, "Intercept")) %>%
+  filter(!(target_year %in% c(7019, 7751, 9076, 11091) & 
+             str_detect(model, "95"))) %>%  ## This removes extreme values of the 95% model in the visualizations
+  mutate(
+    offset_pos = if_else(offset_pos, "Pos offset", "Neg offset"),
+    model = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
+  ) %>%
+  ggplot(aes(x = target_year, y = estimate)) +
+  geom_hline(yintercept = 0) +
+  geom_ribbon(aes(ymin = estimate - std.error * 2, 
+                  ymax = estimate + std.error * 2,
+                  fill = offset_pos), alpha = 0.2, color = "grey75") +
+  geom_line(aes(color = offset_pos), linetype = "dotted") +
+  facet_grid(cols = vars(offset_pos), rows = vars(model), scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    strip.background = element_rect(
+     color="black", fill="white"
+     ),
+     text = element_text(family = "Corbel")
+    )
+```
 
 
+
+
+Now lets plot the remaining parameters.
 ```{r}
 single_cals_log_results %>%
   filter(str_detect(model, "interact") & !str_detect(term, "Intercept")) %>%
@@ -467,10 +497,68 @@ estimate_running_diff <- function(estimates, stdevs) {
 estimate_running_diff(single_cals_log_results_wider_neg$estimate_offset_magnitude,
                       single_cals_log_results_wider_neg$std.error_offset_magnitude)
 
+## Now build the df. Yes, there is a smarter way...
+z_test_comparisons <- data.frame(
+  
+  target_year = single_cals_log_results_wider_pos$target_year[2:100],
+  pos_offset = estimate_running_diff(
+    single_cals_log_results_wider_pos$estimate_offset_magnitude,
+    single_cals_log_results_wider_pos$std.error_offset_magnitude),
+  pos_error = estimate_running_diff(
+    single_cals_log_results_wider_pos$estimate_measurement_error,
+    single_cals_log_results_wider_pos$std.error_measurement_error
+  ),
+  pos_intercept = estimate_running_diff(
+    single_cals_log_results_wider_pos$`estimate_(Intercept)`,
+    single_cals_log_results_wider_pos$`std.error_(Intercept)`
+  ),
+  pos_interaction = estimate_running_diff(
+    single_cals_log_results_wider_pos$`estimate_measurement_error:offset_magnitude`,
+    single_cals_log_results_wider_pos$`std.error_measurement_error:offset_magnitude`
+  ),
+  neg_offset = estimate_running_diff(
+    single_cals_log_results_wider_neg$estimate_offset_magnitude,
+    single_cals_log_results_wider_neg$std.error_offset_magnitude),
+  neg_error = estimate_running_diff(
+    single_cals_log_results_wider_neg$estimate_measurement_error,
+    single_cals_log_results_wider_neg$std.error_measurement_error
+  ),
+  neg_intercept = estimate_running_diff(
+    single_cals_log_results_wider_neg$`estimate_(Intercept)`,
+    single_cals_log_results_wider_neg$`std.error_(Intercept)`
+  ),
+  neg_interaction = estimate_running_diff(
+    single_cals_log_results_wider_neg$`estimate_measurement_error:offset_magnitude`,
+    single_cals_log_results_wider_neg$`std.error_measurement_error:offset_magnitude`
+  )
+  
+) %>%
+  pivot_longer(!target_year, names_to = "parameter", values_to = "z_value") %>%
+  mutate(
+    offset_direction = if_else(str_detect(parameter, "pos"), "pos", "neg"),
+    parameter = str_remove(parameter, "pos_|neg_")
+  )
+
 
 ```
 
-
+```{r}
+z_test_comparisons %>%
+  ggplot(aes(x = target_year, y = z_value)) +
+  geom_hline(yintercept = c(-2, 2), size = 0.5, linetype = "dashed") +
+  geom_line(aes(color = offset_direction)) +
+  facet_wrap(~parameter) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    strip.background = element_rect(
+     color="black", fill="white"
+     ),
+     text = element_text(family = "Corbel")
+    ) +
+   scale_color_manual( values = c("steelblue", "darkblue"))
+```
+On the whole, not much to talk about, a few instances of going over 2z, but this is not decisive given the number of data points we're talking about. Now, what is perhaps a little more interesting is that the Z values have greater swings between bins in most recent years, but more subtle ones the further back we go in time. 
 
 
 _Fourth_, we see that the interaction parameter is very close to zero. This implies we could get similar results by using a simpler model. I find this very counter-intuitive - I suspect that the term for impacts of measurement precision (measurement_error) might start turning the other way, i.e. right now the measurement error estimates tend to imply that increasing the measurement error deteriorates the accuracy of the calibrated date models. Lets see if this will remain the case under different model specifications. Lets also check how this will affect the offset parameter under the different models. As the effects are greater under the 68% HPD models, this is where I'll focus attention.
