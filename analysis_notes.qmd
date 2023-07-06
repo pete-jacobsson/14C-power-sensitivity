@@ -706,7 +706,6 @@ single_cals_log_results_bin10 %>%
     model = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
   ) %>%
   ggplot(aes(x = target_year, y = estimate)) +
-  geom_hline(yintercept = 0) +
   geom_ribbon(aes(ymin = estimate - std.error * 2, 
                   ymax = estimate + std.error * 2,
                   fill = model), alpha = 0.2, color = "grey75") +
@@ -715,6 +714,10 @@ single_cals_log_results_bin10 %>%
   theme_bw() +
   theme(
     panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey80", size = 0.1),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    legend.position = "none",
     strip.background = element_rect(
      color="white", fill="white"
      ),
@@ -724,6 +727,40 @@ single_cals_log_results_bin10 %>%
   scale_color_manual(values = c("steelblue", "darkblue"))
 ```
 
+So what we can see here is that, while the estimates are still effectively similar, the intercept does seem to go up the further back we go in time. 
 
+```{r}
+single_cals_log_results_bin10 %>%
+  filter(str_detect(model, "interact") & !str_detect(term, "Intercept")) %>%
+  mutate(
+    offset_pos = if_else(offset_pos, "Pos offset", "Neg offset"),
+    model = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
+  ) %>%
+  ggplot(aes(x = target_year, y = estimate)) +
+  geom_ribbon(aes(ymin = estimate - std.error * 2, 
+                  ymax = estimate + std.error * 2,
+                  fill = term), alpha = 0.2, color = "grey75") +
+  geom_line(aes(color = term), linetype = "dotted") +
+  facet_grid(cols = vars(offset_pos), rows = vars(model)) +
+  #ylim(c(-0.25, 0.25)) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey80", size = 0.1),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel")
+    ) +
+  scale_fill_manual(name = "Parameter", values = c("steelblue", "grey50", "darkblue")) +
+  scale_color_discrete(name = "Parameter")
+```
+Everything here is kinda flat. So the difference seems to live in the intercept - which makes sense. At this point variation due calibration curve can be ignored (we just used bins that would aggregate a lot of the calibration curve). This implies that the differences that we can detect with this set of simulations are not due to the fine shape of the curve, but maybe rather due to the magnitude of the unceartainty about the calibration curve estimate itself. 
 
+To check whether this is the case, lets take a different approach and see whether uncertainty about the calibration curve may have some kind of a role to play. Now, there exists a risk that this might not be a good estimate at points such as calibration plateaux or steep sections, so we'll need to do two bits of prep:
 
+1. Join the data to calibration curve uncertainty at given target date
+2. Set chunks of the simulated data aside.
