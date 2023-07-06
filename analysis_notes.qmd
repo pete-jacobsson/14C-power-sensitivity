@@ -592,3 +592,138 @@ single_cals_log_results %>%
 ```
 
 OK, suspicion confirmed. What we see here is that the models without the interaction terms are on the one hand much more precise as far as their estimates go, but on the other hand, the parameter for the measurement error does indeed flip sigm - in the interaction models its mean is negative (implies greater scatter of estimates leads to greater chance of measurement being off target), while in the non-interaction models it is positive - implying that greater measurement uncertainty leads to greater precision. Now, we know that in the case of zero offset from the mean of the calibration curve, a super-precise determination would almost always fit within the uncertainty of the calibration curve - and therefore return more accurate results. As such, due to underpinning maths, the interaction model is a better description of reality even if the interaction term itself is centered around zero and the overall parameter estimate uncertainties are far higher.
+
+
+
+Now, what all this did not give us is reproduction of the trends we've seen in the EDA histograms. What I'd be keen to do is to try again with wider bins. There will be a big ole' copy paste comin' this way, I'm afraid. 
+
+
+## Part 6 Lets check a different bin size
+The outcomes above are deeply suspicious given a clear difference that came out in the EDA - there should be some difference in something between models for data in the more recent bits of the curve and those for more distant times. To this end, lets re-do the last few hundred lines, but at just ten bins (rather than 50).]
+
+```{r}
+### Load the data
+
+single_cals <- read_csv("simulation_results/singles_011_results.csv")
+
+###Seperate pos from neg offsets and group things by cal curve 
+single_cals_binned10 <- single_cals %>%
+  mutate (
+    offset_pos = if_else(offset_magnitude > 0, TRUE, FALSE),
+    offset_magnitude = if_else(offset_pos, 
+                               offset_magnitude, offset_magnitude * -1),
+    # Changing negs on offset magnitude to have a consistent direction at downstream visualization.
+    binned_targets = ntile(target_year, 10)
+  ) %>%
+  select(-target_year)
+
+
+single_cals_binned10 <- single_cals %>%
+  mutate(binned_targets = ntile(target_year, 10)) %>%
+  group_by(binned_targets) %>%
+  summarize( #Easy way to get years for the indiv bins, without too muchj headach
+    target_year = min(target_year)
+    ) %>%
+  inner_join(single_cals_binned10) %>% #Join the binned DF back in. No, I don't like this either!
+  group_by(offset_pos, target_year) %>%
+  nest()
+
+```
+
+```{r}
+### Now use map to apply the models across the data structured into only 10 bins
+single_cals_modelled_bin10 <- single_cals_binned10 %>%
+  mutate(
+    offset_only_acc68 = map(data, offset_only_acc68),
+    sigma_only_acc68 = map(data, sigma_only_acc68),
+    offset_sigma_acc68 = map(data, offset_sigma_acc68),
+    offset_sigma_interact_acc68 = map(data, offset_sigma_interact_acc68),
+    offset_only_acc95 = map(data, offset_only_acc95),
+    sigma_only_acc95 = map(data, sigma_only_acc95),
+    offset_sigma_acc95 = map(data, offset_sigma_acc95),
+    offset_sigma_interact_acc95 = map(data, offset_sigma_interact_acc95)
+  )
+
+```
+
+```{r}
+model_names <- colnames(single_cals_modelled_bin10)[4:11]
+
+single_cals_log_results_bin10 <- data.frame()
+single_cals_log_diagnostics_bin10 <- data.frame()
+
+for (model in model_names) {
+  ## This will get a little experimental - we are trying to create a big old table!
+  ## First, we thin down the DF to the model of interest
+  temp_results <- single_cals_modelled_bin10 %>%
+    select(1, 2, all_of(model)) %>% #All of used to address deprecation
+    rename(glm_list = 3) %>% #This rename allows map to work correctly
+    mutate(
+      logistic_results = map(glm_list, tidy), # Do the map and also take note of which model
+      model = model
+    ) %>%
+    select(-glm_list) %>% # Gets rid of the actual models (necessary for saving as csv)
+    unnest(logistic_results)# Unnests results
+  
+  temp_diagnostics <- single_cals_modelled_bin10 %>%
+    select(1, 2, all_of(model)) %>%
+    rename(glm_list = 3) %>%
+    mutate(
+      logistic_diagnostics = map(glm_list, glance),
+      model = model
+    ) %>%
+    select(-glm_list) %>%
+    unnest(logistic_diagnostics)
+  
+  single_cals_log_results_bin10 <- rbind(single_cals_log_results_bin10, temp_results)
+  single_cals_log_diagnostics_bin10 <- rbind(single_cals_log_diagnostics_bin10, 
+                                         temp_diagnostics)
+
+}
+
+
+write_csv(single_cals_log_results_bin10, 
+          "model_results/single_cals_log_results_bin10.csv")
+write_csv(single_cals_log_diagnostics_bin10, 
+          "model_results/single_cals_log_diagnostics_bin10.csv")
+
+```
+
+
+Now lets re-load the results and re-plot the parameters to see if anything changes. 
+```{r}
+single_cals_log_results_bin10 <- read_csv(
+  "model_results/single_cals_log_results_bin10.csv")
+```
+
+First lets plot the intercept
+
+```{r}
+single_cals_log_results_bin10 %>%
+  filter(str_detect(model, "interact") & str_detect(term, "Intercept")) %>%
+  mutate(
+    offset_pos = if_else(offset_pos, "Pos offset", "Neg offset"),
+    model = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
+  ) %>%
+  ggplot(aes(x = target_year, y = estimate)) +
+  geom_hline(yintercept = 0) +
+  geom_ribbon(aes(ymin = estimate - std.error * 2, 
+                  ymax = estimate + std.error * 2,
+                  fill = model), alpha = 0.2, color = "grey75") +
+  geom_line(aes(color = model), linetype = "dotted") +
+  facet_grid(cols = vars(offset_pos), rows = vars(model), scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel")
+    ) +
+  scale_fill_manual(values = c("steelblue", "darkblue")) +
+  scale_color_manual(values = c("steelblue", "darkblue"))
+```
+
+
+
+
