@@ -51,11 +51,16 @@ After some reflection I decided to start off with doing some model-based explora
 
 Knowing this, the next step is to explore if any of these initial observations make it through exploratory modelling. The goal is to check is different parts of the calibration curve are comparable when it comes to effects of offset magnitudes and their interactions with measurement error magnitude.
 
+
+
+
 ```{r}
 ### Load the data
-
 single_cals <- read_csv("simulation_results/singles_011_results.csv")
+```
 
+
+```{r}
 ###Seperate pos from neg offsets and group things by cal curve 
 single_cals_modelled <- single_cals %>%
   mutate (
@@ -760,7 +765,77 @@ single_cals_log_results_bin10 %>%
 ```
 Everything here is kinda flat. So the difference seems to live in the intercept - which makes sense. At this point variation due calibration curve can be ignored (we just used bins that would aggregate a lot of the calibration curve). This implies that the differences that we can detect with this set of simulations are not due to the fine shape of the curve, but maybe rather due to the magnitude of the unceartainty about the calibration curve estimate itself. 
 
+
+## Part 7 Exploring models that include calibration curve uncertainty
+
 To check whether this is the case, lets take a different approach and see whether uncertainty about the calibration curve may have some kind of a role to play. Now, there exists a risk that this might not be a good estimate at points such as calibration plateaux or steep sections, so we'll need to do two bits of prep:
 
 1. Join the data to calibration curve uncertainty at given target date
 2. Set chunks of the simulated data aside.
+
+```{r}
+single_cals_w_curve_uncert <- read_csv("intcal_20_interpolated.csv") %>%
+  select(CalBP, Error) %>%
+  rename(target_year = CalBP, curve_uncert = Error) %>%
+  inner_join(single_cals)
+```
+```{r}
+## Take a quick look at how curve uncertainty goes with accuracy
+
+single_cals_w_curve_uncert %>%
+  mutate(curve_uncert = round(curve_uncert)) %>%
+  group_by(curve_uncert) %>%
+  summarize(
+    `68.2% HPD` = mean(accuracy_68),
+    `95.4% HPD` = mean(accuracy_95)
+  ) %>%
+  pivot_longer(!curve_uncert, values_to = "accuracy", names_to = "hpd_area") %>%
+  ggplot(aes(x = curve_uncert, y = accuracy)) +
+  geom_bar(stat = 'identity', fill = "steelblue") +
+  facet_wrap(~hpd_area)+
+  labs(
+    x = "Calibration curve uncertainty",
+    y = "Ratio accurate"
+  ) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel")
+    )
+  
+```
+
+OK, we can see that there is a relationship between calibration curve uncertainty and accuracy of the different modelled HPD areas.
+
+Next step is to build a few models and compare their performance. Lets recall that we want to keep some of the data out, to ensure that we can use it to test the models at the end of the process. 
+To do this, I chose the following periods:
+- All data from 2400 to 2700 cal BP (a calibration plateau)
+- All data from 6500 to 6800 cal BP (a "straight" section of the curve)
+- All data from 9400 to 9600 cal BP
+
+```{r}
+###Step 1. Extract bits that we want to use for model validation
+single_cals_curve_uncert_val <- single_cals_w_curve_uncert %>%
+  filter((target_year >= 2400 & target_year <= 2700) | 
+         (target_year >= 6500 & target_year <= 6800) | 
+         (target_year >= 9400 & target_year <= 9500))
+
+single_cals_curve_uncert_mod <- single_cals_w_curve_uncert %>%
+  filter(!((target_year >= 2400 & target_year <= 2700) | 
+           (target_year >= 6500 & target_year <= 6800) | 
+           (target_year >= 9400 & target_year <= 9500)))
+
+## Now these get put into csv files for use later:
+
+write_csv(single_cals_curve_uncert_val, "single_cals_curve_uncert_val.csv")
+write_csv(single_cals_curve_uncert_mod, "single_cals_curve_uncert_mod.csv")
+```
+
+
