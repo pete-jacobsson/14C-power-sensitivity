@@ -838,4 +838,15 @@ write_csv(single_cals_curve_uncert_val, "single_cals_curve_uncert_val.csv")
 write_csv(single_cals_curve_uncert_mod, "single_cals_curve_uncert_mod.csv")
 ```
 
+```{r}
+### Now load up the model data again, nest it and build the model functions
+single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv")
+```
+
+```{r}
+single_cals_curve_uncert_nest <- single_cals_curve_uncert_mod %>%
+  select(curve_uncert, measurement_error, offset_magnitude, accuracy_68,
+         accuracy_95) %>%
+  nest()
+```
 
