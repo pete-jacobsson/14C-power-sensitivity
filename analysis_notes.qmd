@@ -844,9 +844,131 @@ single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv")
 ```
 
 ```{r}
+##Nesting
 single_cals_curve_uncert_nest <- single_cals_curve_uncert_mod %>%
+  mutate(is_pos = if_else(offset_magnitude >= 0, TRUE, FALSE)) %>%
   select(curve_uncert, measurement_error, offset_magnitude, accuracy_68,
-         accuracy_95) %>%
+         accuracy_95, is_pos) %>%
+  group_by(is_pos) %>%
   nest()
+```
+
+```{r}
+## Write model functions for 68% HPDs
+
+offset_curve_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude + curve_uncert, data = singles_data, 
+      family = binomial)
+}
+
+sigma_curve_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + curve_uncert, data = singles_data, 
+      family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_curve_interact_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude + curve_uncert + 
+        offset_magnitude * curve_uncert, 
+      data = singles_data, 
+      family = binomial)
+}
+
+sigma_curve_interact_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + curve_uncert +
+        measurement_error * curve_uncert, 
+      data = singles_data, 
+      family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_sc_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
+        measurement_error * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_oc_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_oc_sc_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * curve_uncert + measurement_error * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_oc_sc_ocs_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * curve_uncert + measurement_error * curve_uncert +
+        offset_magnitude * measurement_error * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+```
+
+```{r}
+## And now have those set up for the 95% HPD ranges
+
+
+offset_curve_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ offset_magnitude + curve_uncert, data = singles_data, 
+      family = binomial)
+}
+
+sigma_curve_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + curve_uncert, data = singles_data, 
+      family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_curve_interact_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ offset_magnitude + curve_uncert + 
+        offset_magnitude * curve_uncert, 
+      data = singles_data, 
+      family = binomial)
+}
+
+sigma_curve_interact_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + curve_uncert +
+        measurement_error * curve_uncert, 
+      data = singles_data, 
+      family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_sc_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert +
+        measurement_error * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_oc_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_oc_sc_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * curve_uncert + measurement_error * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_interact_oc_sc_ocs_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * curve_uncert + measurement_error * curve_uncert +
+        offset_magnitude * measurement_error * curve_uncert, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
 ```
 
