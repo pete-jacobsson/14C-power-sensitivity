@@ -998,7 +998,20 @@ single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
 
 ```
 
+```{r}
+### Lets re-orgnize the table to make parameter extraction easier.
+single_cals_curve_uncert_regr <- single_cals_curve_uncert_regr %>%
+  select(-data) %>%
+  pivot_longer(!is_pos, names_to = "model", values_to = "model_results")
+
+saveRDS(single_cals_curve_uncert_regr, "single_cals_curve_uncert_regr.rds")
+```
+
+```{r}
+single_cals_curve_uncert_regr <- readRDS("single_cals_curve_uncert_regr.rds")
+```
 
 
+## Part 8: Compare the models with cal curve ucnertainty as a variable
 
 
