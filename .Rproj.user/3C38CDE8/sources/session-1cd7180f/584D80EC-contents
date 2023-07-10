@@ -913,8 +913,7 @@ offset_sigma_curve_interact_oc_sc_ocs_acc68 <- function(singles_data) {
 ```
 
 ```{r}
-## And now have those set up for the 95% HPD ranges
-
+## And now have those set up for the 95% HPD ranges -- yes I could have pivoted longer. I know!
 
 offset_curve_acc95 <- function(singles_data) {
   glm(accuracy_95 ~ offset_magnitude + curve_uncert, data = singles_data, 
@@ -971,4 +970,35 @@ offset_sigma_curve_interact_oc_sc_ocs_acc95 <- function(singles_data) {
 }
 
 ```
+
+
+```{r}
+### Now lets run the models...
+single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
+  mutate(
+    offset_curve_acc68 = map(data, offset_curve_acc68),
+    offset_curve_acc95 = map(data, offset_curve_acc95),
+    offset_curve_interact_acc68 = map(data, offset_curve_interact_acc68),
+    offset_curve_interact_acc95 = map(data, offset_curve_interact_acc95),
+    offset_sigma_curve_acc68 = map(data, offset_sigma_curve_acc68),
+    offset_sigma_curve_acc95 = map(data, offset_sigma_curve_acc95),
+    offset_sigma_curve_interact_oc_acc68 = 
+      map(data, offset_sigma_curve_interact_oc_acc68),
+    offset_sigma_curve_interact_oc_acc95 = 
+      map(data, offset_sigma_curve_interact_oc_acc95),
+    offset_sigma_curve_interact_oc_sc_acc68 = 
+      map(data, offset_sigma_curve_interact_oc_sc_acc68),
+    offset_sigma_curve_interact_oc_sc_acc95 = 
+      map(data, offset_sigma_curve_interact_oc_sc_acc95),
+    offset_sigma_curve_interact_oc_sc_ocs_acc68 = 
+      map(data, offset_sigma_curve_interact_oc_sc_ocs_acc68),
+    offset_sigma_curve_interact_oc_sc_ocs_acc95 = 
+      map(data, offset_sigma_curve_interact_oc_sc_ocs_acc95)
+  )
+
+```
+
+
+
+
 
