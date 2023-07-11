@@ -1,0 +1,4 @@
+"0","single_cals_curve_uncert_diag <- single_cals_curve_uncert_regr %>%"
+"0","  mutate(model_diags = map(model_results, glance)) %>%"
+"0","  select(-model_results) %>%"
+"0","  unnest(cols = c(model_diags))"

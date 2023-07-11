@@ -4,7 +4,7 @@ author: "Piotr Jacobsson"
 format: html
 ---
 
-```{r}
+```{r, include=FALSE}
 library(tidyverse)
 library(broom)
 ```
@@ -1012,6 +1012,81 @@ single_cals_curve_uncert_regr <- readRDS("single_cals_curve_uncert_regr.rds")
 ```
 
 
-## Part 8: Compare the models with cal curve ucnertainty as a variable
+## Part 8: Compare the models with cal curve uncertainty as a variable
+
+I'll attack this the same way as before - first getting the AIC and the BIC and comparing. I guess I'll visualize them as a bar plot going from highest to lowest.
+
+```{r}
+### Extract the diagnostics
+single_cals_curve_uncert_diag <- single_cals_curve_uncert_regr %>%
+  mutate(model_diags = map(model_results, glance)) %>%
+  select(-model_results) %>%
+  unnest(cols = c(model_diags))
+```
+
+```{r}
+### Now the visualization
+single_cals_curve_uncert_diag %>%
+  mutate(
+    offset_direction = if_else(is_pos, "Positive", "Negative"),
+    hpd_area = if_else(str_detect(model, "68"), "68.2% HPD Area", "95.4% HPD Area"),
+    model = str_remove_all(model, "_acc\\d{2}")
+  ) %>%
+  ggplot(aes(x = model, y = AIC)) +
+  geom_bar(stat = "identity", fill = "steelblue", color = "grey40") +
+  facet_grid(rows = vars(hpd_area), cols = vars(offset_direction), scales = "free") +
+  labs(
+    x = "Model",
+    subtitle = "AIC of different models that include curve uncertainty"
+  ) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    )
+
+```
+
+So the most complex models have the lowest AIC. In other words, those things seem to be doing something. Lets check BIC.
+
+```{r}
+single_cals_curve_uncert_diag %>%
+  mutate(
+    offset_direction = if_else(is_pos, "Positive", "Negative"),
+    hpd_area = if_else(str_detect(model, "68"), "68.2% HPD Area", "95.4% HPD Area"),
+    model = str_remove_all(model, "_acc\\d{2}")
+  ) %>%
+  ggplot(aes(x = model, y = BIC)) +
+  geom_bar(stat = "identity", fill = "steelblue", color = "grey40") +
+  facet_grid(rows = vars(hpd_area), cols = vars(offset_direction), scales = "free") +
+  labs(
+    x = "Model",
+    subtitle = "BIC of different models that include curve uncertainty"
+  ) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    )
+```
+
+Same. By AIC/BIC alone, most complex model fares best.
+
 
 
