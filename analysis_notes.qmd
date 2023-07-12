@@ -1086,7 +1086,15 @@ single_cals_curve_uncert_diag %>%
     )
 ```
 
-Same. By AIC/BIC alone, most complex model fares best.
+Same. By AIC/BIC alone, most complex model fares best. Lets review what it means
+
+```{r}
+osc_interact_params <- single_cals_curve_uncert_regr %>%
+  filter(str_detect(model, "oc_sc_ocs")) %>%
+  mutate(model_results = map(model_results, tidy)) %>%
+  unnest(cols = c(model_results))
+```
+
 
 
 
