@@ -1095,6 +1095,28 @@ osc_interact_params <- single_cals_curve_uncert_regr %>%
   unnest(cols = c(model_results))
 ```
 
+```{r}
+osc_interact_params %>%
+  filter(str_detect(model, "68")) %>%
+  ggplot(aes(x = is_pos, y = estimate)) +
+  geom_hline(yintercept = 0, color = "grey80") +
+  geom_point(stat = "identity") +
+  geom_linerange(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error)) +
+  facet_wrap(~term, scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    )
+```
 
 
 
