@@ -1115,8 +1115,85 @@ osc_interact_params %>%
      ),
      text = element_text(family = "Corbel"),
     axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
-    )
+    ) +
+  labs(
+    subtitle = "68.2% HPD"
+  )
 ```
+
+
+```{r}
+osc_interact_params %>%
+  filter(str_detect(model, "95")) %>%
+  ggplot(aes(x = is_pos, y = estimate)) +
+  geom_hline(yintercept = 0, color = "grey80") +
+  geom_point(stat = "identity") +
+  geom_linerange(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error)) +
+  facet_wrap(~term, scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    ) +
+  labs(
+    subtitle = "95.4% HPD"
+  )
+```
+
+
+Now that we have some results, lets start checking how well they fit the simulated data and, while we're at it, trying to understand what's happening. 
+
+For the purpose of udnerstanding lets go back to the actual equation that's getting used. Lets begin by looking back at the equation behind logistic regression and what it means for us in this context:
+
+$$
+P(x) = \frac{1}{1 + e^{-(A_0 + A_1 x_1 + A_2 x_2 +...+A_n A_{n+1}x_1x_2+...)}}
+$$
+Lets read this thing. The bigger the value in the brackets above the *e*, the closer the denominator to one and therefore the closer the probability of the result being correct (as the exponential races to zero). By contrast, the smaller the brackets in the denominator, the bigger the exponential result, and the whole thing gets closer to zero. Lets check what this gives us. With this we can start plotting the regression lines using the estimates:
+```{r}
+
+osc_interact_params_wider <- osc_interact_params %>%
+  mutate(model = if_else(str_detect(model, "68"), "hpd_68", "hpd_95")) %>%
+  select(model, is_pos, term, estimate) %>%
+  pivot_wider(names_from = term, values_from = estimate)
+
+estimate_precision <- function(offset, error, curve_sigma, hpd) {
+  osc_interact_params_wider %>%
+    filter(is_pos == (offset >= 0), str_detect(model, hpd)) %>%
+    mutate(
+      exp_term = `(Intercept)` + offset_magnitude * offset + 
+        measurement_error * error + 
+        curve_uncert * curve_sigma +
+        `offset_magnitude:curve_uncert` * offset * curve_sigma +
+        `measurement_error:curve_uncert` * error * curve_sigma +
+        `measurement_error:offset_magnitude` * error * offset_magnitude +
+        `measurement_error:offset_magnitude:curve_uncert` * 
+        error * offset_magnitude * curve_sigma,
+      
+      prob = 1 / (1 + exp(-exp_term))
+    ) %>%
+    pull(prob)
+}
+
+###Yes, it's overkill, but it's good to refresh things at a basic level
+```
+
+```{r}
+estimate_precision(offset = -30, error = 16, curve_sigma = 20, hpd = "95")
+  
+curve(estimate_precision(x, error = 40, curve_sigma = 20, hpd = "95"))
+
+```
+
+OK, the estimates are screwed.
+
 
 
 

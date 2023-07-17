@@ -1,0 +1,4 @@
+"0","osc_interact_params <- single_cals_curve_uncert_regr %>%"
+"0","  filter(str_detect(model, ""oc_sc_ocs"")) %>%"
+"0","  mutate(model_results = map(model_results, tidy)) %>%"
+"0","  unnest(cols = c(model_results))"

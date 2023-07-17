@@ -1,0 +1,7 @@
+"0","##Nesting"
+"0","single_cals_curve_uncert_nest <- single_cals_curve_uncert_mod %>%"
+"0","  mutate(is_pos = if_else(offset_magnitude >= 0, TRUE, FALSE)) %>%"
+"0","  select(curve_uncert, measurement_error, offset_magnitude, accuracy_68,"
+"0","         accuracy_95, is_pos) %>%"
+"0","  group_by(is_pos) %>%"
+"0","  nest()"

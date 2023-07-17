@@ -1,5 +1,4 @@
-"0","## And now have those set up for the 95% HPD ranges"
-"0",""
+"0","## And now have those set up for the 95% HPD ranges -- yes I could have pivoted longer. I know!"
 "0",""
 "0","offset_curve_acc95 <- function(singles_data) {"
 "0","  glm(accuracy_95 ~ offset_magnitude + curve_uncert, data = singles_data, "
