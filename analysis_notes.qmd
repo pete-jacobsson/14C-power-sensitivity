@@ -910,6 +910,12 @@ offset_sigma_curve_interact_oc_sc_ocs_acc68 <- function(singles_data) {
       data = singles_data, family = binomial(link = 'logit'))
 }
 
+offset_sigma_curve_interact_os_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * measurement_error, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
 ```
 
 ```{r}
@@ -969,6 +975,12 @@ offset_sigma_curve_interact_oc_sc_ocs_acc95 <- function(singles_data) {
       data = singles_data, family = binomial(link = 'logit'))
 }
 
+offset_sigma_curve_interact_os_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * measurement_error, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
 ```
 
 
@@ -993,7 +1005,11 @@ single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
     offset_sigma_curve_interact_oc_sc_ocs_acc68 = 
       map(data, offset_sigma_curve_interact_oc_sc_ocs_acc68),
     offset_sigma_curve_interact_oc_sc_ocs_acc95 = 
-      map(data, offset_sigma_curve_interact_oc_sc_ocs_acc95)
+      map(data, offset_sigma_curve_interact_oc_sc_ocs_acc95),
+    offset_sigma_curve_interact_os_acc68 = 
+      map(data, offset_sigma_curve_interact_os_acc68),
+    offset_sigma_curve_interact_os_acc95 = 
+      map(data, offset_sigma_curve_interact_os_acc95)
   )
 
 ```
@@ -1086,7 +1102,7 @@ single_cals_curve_uncert_diag %>%
     )
 ```
 
-Same. By AIC/BIC alone, most complex model fares best. Lets review what it means
+Same. By AIC/BIC alone, most complex model is second best. *I went for it in the first place, because I have not thought enough to get the best model at that stage of writing - this came out after the debacle with params, as seen below :P*
 
 ```{r}
 osc_interact_params <- single_cals_curve_uncert_regr %>%
@@ -1193,6 +1209,51 @@ curve(estimate_precision(x, error = 40, curve_sigma = 20, hpd = "95"))
 ```
 
 OK, the estimates are screwed.
+
+
+## Part 9 Try again, simpler model
+
+The screwy estimates imply that the best-fitting, most complex model, even though satisfactory in terms of AIC/BIC, might not be best suited to research design simulation. Hence the need to settle for something simpler. Lets go back and cut out some of the interaction terms. While we will still need the term running between the measurement error and offset magnitude (so that the simulation model is consistent with the hard reality), everything else was adding nice nuance, but may not have been strictly necessary. This will require first building the relevant model and then checki
+
+```{r}
+##Get the results out
+
+offset_curve_sigma_os_params <- readRDS("single_cals_curve_uncert_regr.rds") %>%
+  filter(str_detect(model, "offset_sigma_curve_interact_os_acc")) %>%
+  mutate(model_results = map(model_results, tidy)) %>%
+  unnest(cols = c(model_results))
+```
+
+```{r}
+  offset_curve_sigma_os_params %>%
+  mutate(
+    is_pos = if_else(is_pos, "pos_offset", "neg_offset"),
+    hpd_area = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
+    ) %>%
+  ggplot(aes(x = is_pos, y = estimate)) +
+  geom_hline(yintercept = 0, color = "grey80") +
+  geom_point(stat = "identity") +
+  geom_linerange(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error)) +
+  facet_grid(rows = vars(term), cols = vars(hpd_area), scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    ) +
+  labs(
+    subtitle = "68.2% HPD"
+  )
+```
+
+This will need to be made way prettier, but the parameters already look better. For starters there is a clear difference in the intercepts between the 95% HPDs and the 68% HPDs - which is what we'd expect. Interesting is the lower importance of curve uncertainty effects for the 68% models, as well as the much broader uncertainty of the measurement error in the 95% HPD calibrations. What I do find interestying, and promising is that the effect of the offset magnitude, according to this model, is similar across HPD areas, and that measurement uncertainties seem to have similar effect as well. OK, lets plot the outcomes against the simulated data to make sure this actually makes sense :D
 
 
 
