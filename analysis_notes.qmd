@@ -7,6 +7,7 @@ format: html
 ```{r, include=FALSE}
 library(tidyverse)
 library(broom)
+
 ```
 
 
@@ -1256,5 +1257,48 @@ offset_curve_sigma_os_params <- readRDS("single_cals_curve_uncert_regr.rds") %>%
 This will need to be made way prettier, but the parameters already look better. For starters there is a clear difference in the intercepts between the 95% HPDs and the 68% HPDs - which is what we'd expect. Interesting is the lower importance of curve uncertainty effects for the 68% models, as well as the much broader uncertainty of the measurement error in the 95% HPD calibrations. What I do find interestying, and promising is that the effect of the offset magnitude, according to this model, is similar across HPD areas, and that measurement uncertainties seem to have similar effect as well. OK, lets plot the outcomes against the simulated data to make sure this actually makes sense :D
 
 
+```{r}
+## Get the numbers to underpin drawin of curves. Courtesy of Allan Cameron, over here: https://stackoverflow.com/questions/65081329/multiple-logistic-regression-ggplot-with-groups
+
+logistic_predicts_pos <- data.frame(
+  offset_magnitude = rep(seq(0, 50, length.out = 50), 16),
+  measurement_error = c(rep(8, 200), rep(16, 200), rep(24, 200), rep(32, 200)),
+  curve_uncert = rep(c(rep(8, 50), rep(12, 50), rep(16, 50), rep(20, 50)), 4)
+  ) 
+
+logistic_predicts_pos <- logistic_predicts_pos %>%
+  mutate(
+    ratio_accurate_68 = predict(single_cals_curve_uncert_regr$model_results[[27]], 
+                                newdata = logistic_predicts_pos,
+                                type = "response") ,
+    hpd_95_expect = predict(single_cals_curve_uncert_regr$model_results[[28]], 
+                 newdata = logistic_predicts_pos,
+                 type = "response")
+  ) %>%
+  filter(measurement_error == 24 & curve_uncert == 12)
+
+```
+
+
+```{r}
+single_cals_curve_uncert_mod %>%
+  filter(offset_magnitude > 0) %>%
+  mutate(
+    offset_magnitude = plyr::round_any(offset_magnitude, 5),
+    measurement_error = plyr::round_any(measurement_error, 8),  ##These will not be exact, but hopefully good enough for visualization
+    curve_uncert = plyr::round_any(curve_uncert, 4) ## Ditto
+      ) %>%
+  group_by(offset_magnitude, measurement_error, curve_uncert) %>%
+  summarize(
+    ratio_accurate_68 = mean(accuracy_68),
+    ratio_accurate_95 = mean(accuracy_95)
+  ) %>%
+  filter(measurement_error == 24 & curve_uncert == 12) %>%
+  ggplot(aes(x = offset_magnitude, y = ratio_accurate_68)) +
+  geom_bar(stat = "identity") +
+  geom_line(data = logistic_predicts_pos)
+
+
+```
 
 
