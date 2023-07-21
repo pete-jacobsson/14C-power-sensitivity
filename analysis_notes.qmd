@@ -1257,6 +1257,71 @@ offset_curve_sigma_os_params <- readRDS("single_cals_curve_uncert_regr.rds") %>%
 This will need to be made way prettier, but the parameters already look better. For starters there is a clear difference in the intercepts between the 95% HPDs and the 68% HPDs - which is what we'd expect. Interesting is the lower importance of curve uncertainty effects for the 68% models, as well as the much broader uncertainty of the measurement error in the 95% HPD calibrations. What I do find interestying, and promising is that the effect of the offset magnitude, according to this model, is similar across HPD areas, and that measurement uncertainties seem to have similar effect as well. OK, lets plot the outcomes against the simulated data to make sure this actually makes sense :D
 
 
+## Part 10 Model visualization. Use a function.
+Now that we have a model with promising looking parameters, lets visualize it. This is always a little bit of a headache once we get to multiple regression, especially as we want to plot a few visuals to see if our predictions actually match the data they originated from. To simplify the process, lets make it more complex first. lets put together some functions to help us.
+
+```{r}
+set_up_predicts_tab <- function(param_to_predict = "offset", offset, sigma, curve_uncert) {
+  ## This function takes on information on what parameter we want to predict on and what values to fix for other parameters
+  ## Returns a table of predicted values
+  ## Assumes correct vparameter names entered ("offset", "sigma", "curve_uncert"). Assumes input for values comes either as vectors of min/max, or as desired mean values.
+  
+  if (param_to_predict == "offset") {
+    offset_magnitude = seq(offset[1], offset[2], length.out = 100)
+    measurement_error = rep(mean(sigma), 100)
+    curve_uncert = rep(mean(curve_uncert), 100)
+  } else if (param_to_predict == "sigma") {
+    offset_magnitude = rep(mean(offset), 100)
+    measurement_error = seq(sigma[1], sigma[2], length.out = 100)
+    curve_uncert = rep(mean(curve_uncert), 100)
+  } else if (param_to_predict == "curve_uncert") {
+    offset_magnitude = rep(mean(offset), 100)
+    measurement_error = rep(mean(sigma), 100)
+    curve_uncert = seq(curve_uncert[1], curve_uncert[2], length.out = 100)
+  } else {
+    return(warning("incorrect parmaeter name, please check"))
+  }
+  
+  predict_table <- data.frame(offset_magnitude, measurement_error, curve_uncert)
+  predict_table
+  
+}
+```
+
+```{r}
+## Test
+
+set_up_predicts_tab(offset = c(0, 25), sigma = c(8, 32), curve_uncert = c(10, 20))
+set_up_predicts_tab(param_to_predict = "sigma", offset = c(0, 25), 
+                    sigma = c(8, 32), curve_uncert = c(10, 20))
+set_up_predicts_tab(param_to_predict = "curve_uncert", offset = c(0, 25), 
+                    sigma = c(8, 32), curve_uncert = c(10, 20))
+set_up_predicts_tab(param_to_predict = "potato", offset = c(0, 25), 
+                    sigma = c(8, 32), curve_uncert = c(10, 20))
+```
+
+```{r}
+execute_predictions <- function(pred_table, is_positive, hpd_area) {
+  ### The function takes on a prediction table to fill, re-organizes the model results and applies a prediction
+  ### Assumes that the input table is a prediction table and that the is_pos and hpd_area arguments are logical and c(68, 95) respectively.
+  
+  model_results <- single_cals_curve_uncert_regr %>%
+    filter(str_detect(model, "os") & 
+             str_detect(model, hpd_area) &
+             is_pos == is_positive)
+  
+  model_results <- model_results$model_results[[1]]
+}
+```
+
+```{r}
+execute_predictions(is_positive = TRUE, hpd_area = "68") %>%
+  summary()
+```
+
+
+
+
 ```{r}
 ## Get the numbers to underpin drawin of curves. Courtesy of Allan Cameron, over here: https://stackoverflow.com/questions/65081329/multiple-logistic-regression-ggplot-with-groups
 
