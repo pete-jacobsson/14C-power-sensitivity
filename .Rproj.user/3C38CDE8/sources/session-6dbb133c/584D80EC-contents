@@ -1291,7 +1291,7 @@ set_up_predicts_tab <- function(param_to_predict = "offset", offset, sigma, curv
 ```{r}
 ## Test
 
-test <- set_up_predicts_tab(offset = c(0, 25), sigma = c(8, 32), curve_uncert = c(10, 20))
+test <- set_up_predicts_tab(offset = c(0, 50), sigma = c(8, 32), curve_uncert = c(10, 20))
 set_up_predicts_tab(param_to_predict = "sigma", offset = c(0, 25), 
                     sigma = c(8, 32), curve_uncert = c(10, 20))
 set_up_predicts_tab(param_to_predict = "curve_uncert", offset = c(0, 25), 
@@ -1326,6 +1326,32 @@ execute_predictions <- function(pred_table, is_positive, hpd_area) {
 
 ```{r}
 test1 <- execute_predictions(test, is_positive = TRUE, hpd_area = "68")
+```
+
+```{r}
+summarize_sims <- function(sim_results, hpd_area, offset, sigma, curve_uncert, 
+                           grouping_param) {
+  sim_results <- sim_results %>%
+    filter(
+      between(offset_magnitude, offset[1], offset[2]) &
+      between(measurement_error, sigma[1], sigma[2]) &
+      between(curve_uncert, curve_uncert[1], curve_uncert[2])) %>%
+    select(starts_with(grouping_param), ends_with(hpd_area)) %>%
+    rename("var_to_plot" = 1, "result_accurate" = 2) %>%
+    mutate(var_to_plot = plyr::round_any(var_to_plot, 2)) %>%
+    group_by(var_to_plot) %>%
+    summarize(
+      ratio_accurate = mean(result_accurate)
+    )
+  
+  sim_results
+}
+```
+
+```{r}
+summarize_sims(single_cals_w_curve_uncert, hpd_area = "68", offset = c(0,50),
+               sigma = c(8, 32), curve_uncert = c(10, 20), 
+               grouping_param = "offset_magnitude")
 ```
 
 
