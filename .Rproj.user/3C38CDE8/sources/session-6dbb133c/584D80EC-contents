@@ -1330,7 +1330,7 @@ test1 <- execute_predictions(test, is_positive = TRUE, hpd_area = "68")
 
 ```{r}
 summarize_sims <- function(sim_results, hpd_area, offset, sigma, curve_uncert, 
-                           grouping_param) {
+                           grouping_param, rounding) {
   sim_results <- sim_results %>%
     filter(
       between(offset_magnitude, offset[1], offset[2]) &
@@ -1338,7 +1338,7 @@ summarize_sims <- function(sim_results, hpd_area, offset, sigma, curve_uncert,
       between(curve_uncert, curve_uncert[1], curve_uncert[2])) %>%
     select(starts_with(grouping_param), ends_with(hpd_area)) %>%
     rename("var_to_plot" = 1, "result_accurate" = 2) %>%
-    mutate(var_to_plot = plyr::round_any(var_to_plot, 2)) %>%
+    mutate(var_to_plot = plyr::round_any(var_to_plot, rounding)) %>%
     group_by(var_to_plot) %>%
     summarize(
       ratio_accurate = mean(result_accurate)
@@ -1349,10 +1349,29 @@ summarize_sims <- function(sim_results, hpd_area, offset, sigma, curve_uncert,
 ```
 
 ```{r}
+test2 <- summarize_sims(single_cals_w_curve_uncert, hpd_area = "68", offset = c(0,50),
+                        sigma = c(8, 32), curve_uncert = c(10, 20), 
+                        grouping_param = "offset_magnitude", rounding = 4)
 summarize_sims(single_cals_w_curve_uncert, hpd_area = "68", offset = c(0,50),
                sigma = c(8, 32), curve_uncert = c(10, 20), 
-               grouping_param = "offset_magnitude")
+               grouping_param = "measurement_error", rounding = 2)
 ```
+
+```{r}
+plot_logistic <- function(pred_df, sims_df, xlab, ylab, acc_target) {
+  plot <- ggplot(data = sims_df) +
+    geom_hline(yintercept = acc_target, color = "grey70") +
+    geom_bar(aes(x = var_to_plot, y = ratio_accurate), stat = 'identity') +
+    geom_line()
+  
+  plot
+}
+```
+
+```{r}
+plot_logistic(pred_df = test1, sims_df = test2, acc_target = 0.68)
+```
+
 
 
 

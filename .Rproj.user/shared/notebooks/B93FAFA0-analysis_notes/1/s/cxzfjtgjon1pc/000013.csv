@@ -1,3 +1,5 @@
-"0","set_up_predicts_tab(param_to_predict = ""potato"", offset = c(0, 25), "
+"0","## Test"
+"0",""
+"0","test <- set_up_predicts_tab(offset = c(0, 50), sigma = c(8, 32), curve_uncert = c(10, 20))"
+"0","set_up_predicts_tab(param_to_predict = ""sigma"", offset = c(0, 25), "
 "0","                    sigma = c(8, 32), curve_uncert = c(10, 20))"
-"2","Warning: incorrect parmaeter name, please check"

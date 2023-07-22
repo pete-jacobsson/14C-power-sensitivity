@@ -1,3 +1,0 @@
-"0","summarize_sims(single_cals_w_curve_uncert, hpd_area = ""68"", offset = c(0,50),"
-"0","               sigma = c(8, 32), curve_uncert = c(10, 20), "
-"0","               grouping_param = ""offset_magnitude"")"
