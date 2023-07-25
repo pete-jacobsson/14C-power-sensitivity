@@ -1261,6 +1261,64 @@ This will need to be made way prettier, but the parameters already look better. 
 Now that we have a model with promising looking parameters, lets visualize it. This is always a little bit of a headache once we get to multiple regression, especially as we want to plot a few visuals to see if our predictions actually match the data they originated from. To simplify the process, lets make it more complex first. lets put together some functions to help us.
 
 ```{r}
+### visualize_singles_logistic <- function(){
+## This function takes on a simulated single calibration data frame, a logistic model output, ranges of the three variable parameters, and information which parameter to plot
+## Raturns graph with histogram of accurate results overlain with the logistic regression fit.
+
+## set_up_predicts_tab
+## create_predicts
+## filter_sims_data
+## plot_sims_w_logistic
+
+
+
+
+##}
+```
+
+
+```{r}
+### OK, lets try to make the creation of the prediction table a little more flexible-  this will pay off once we get to WMDs
+
+test <- list(
+  offset_magnitude = list("offset_magnitude", TRUE, 0, 50),
+  measurement_error = list("measurement_error", FALSE, 8, 32),
+  curve_uncert = list("curve_uncert", FALSE, 10, 30)
+)
+
+test[[1]]
+
+
+for (item in test) {
+  if(item[[2]]) {
+    assign(item[[1]], seq(item[[3]], item[[4]], length.out = 100))
+  } else {
+    assign(item[[1]], 
+           rep(
+             mean(c(item[[3]], item[[4]])),
+             100))
+  }
+}
+
+data.frame(test[[1]][[1]] = get(test[[1]][[1]]))
+
+get("offset_magnitude")
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
 set_up_predicts_tab <- function(param_to_predict = "offset", offset, sigma, curve_uncert) {
   ## This function takes on information on what parameter we want to predict on and what values to fix for other parameters
   ## Returns a table of predicted values
@@ -1377,7 +1435,7 @@ plot_logistic(pred_df = test1, sims_df = test2, acc_target = 0.68)
 
 
 ```{r}
-## Get the numbers to underpin drawin of curves. Courtesy of Allan Cameron, over here: https://stackoverflow.com/questions/65081329/multiple-logistic-regression-ggplot-with-groups
+## Get the numbers to underpin drawing of curves. Courtesy of Allan Cameron, over here: https://stackoverflow.com/questions/65081329/multiple-logistic-regression-ggplot-with-groups
 
 logistic_predicts_pos <- data.frame(
   offset_magnitude = rep(seq(0, 50, length.out = 50), 16),
