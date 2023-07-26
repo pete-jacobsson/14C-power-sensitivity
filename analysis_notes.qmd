@@ -7,6 +7,7 @@ format: html
 ```{r, include=FALSE}
 library(tidyverse)
 library(broom)
+library(jtools)
 
 ```
 
@@ -1258,224 +1259,29 @@ This will need to be made way prettier, but the parameters already look better. 
 
 
 ## Part 10 Model visualization. Use a function.
-Now that we have a model with promising looking parameters, lets visualize it. This is always a little bit of a headache once we get to multiple regression, especially as we want to plot a few visuals to see if our predictions actually match the data they originated from. To simplify the process, lets make it more complex first. lets put together some functions to help us.
+Now that we have a model with promising looking parameters, lets visualize it. This is always a little bit of a headache once we get to multiple regression, especially as we want to plot a few visuals to see if our predictions actually match the data they originated from. To simplify the process, I'll use the jtools package. I went off to look for it, after having spent quite some time trying to reinvent it (:P).
 
 ```{r}
-### visualize_singles_logistic <- function(){
-## This function takes on a simulated single calibration data frame, a logistic model output, ranges of the three variable parameters, and information which parameter to plot
-## Raturns graph with histogram of accurate results overlain with the logistic regression fit.
+pred_offset_pos_acc68 <- make_predictions(offset_curve_sigma_os$model_results[[3]],
+                                          pred = "offset_magnitude",
+                                          pred.values = seq(0, 50)) %>%
+  rename("ratio_accurate_68" = 1)
 
-## set_up_predicts_tab
-## create_predicts
-## filter_sims_data
-## plot_sims_w_logistic
-
-
-
-
-##}
-```
-
-
-```{r}
-### OK, lets try to make the creation of the prediction table a little more flexible-  this will pay off once we get to WMDs
-
-test <- list(
-  offset_magnitude = list("offset_magnitude", TRUE, 0, 50),
-  measurement_error = list("measurement_error", FALSE, 8, 32),
-  curve_uncert = list("curve_uncert", FALSE, 10, 30)
-)
-
-test[[1]]
-
-
-for (item in test) {
-  if(item[[2]]) {
-    assign(item[[1]], seq(item[[3]], item[[4]], length.out = 100))
-  } else {
-    assign(item[[1]], 
-           rep(
-             mean(c(item[[3]], item[[4]])),
-             100))
-  }
-}
-
-data.frame(test[[1]][[1]] = get(test[[1]][[1]]))
-
-get("offset_magnitude")
-
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-```{r}
-set_up_predicts_tab <- function(param_to_predict = "offset", offset, sigma, curve_uncert) {
-  ## This function takes on information on what parameter we want to predict on and what values to fix for other parameters
-  ## Returns a table of predicted values
-  ## Assumes correct vparameter names entered ("offset", "sigma", "curve_uncert"). Assumes input for values comes either as vectors of min/max, or as desired mean values.
-  
-  if (param_to_predict == "offset") {
-    offset_magnitude = seq(offset[1], offset[2], length.out = 100)
-    measurement_error = rep(mean(sigma), 100)
-    curve_uncert = rep(mean(curve_uncert), 100)
-  } else if (param_to_predict == "sigma") {
-    offset_magnitude = rep(mean(offset), 100)
-    measurement_error = seq(sigma[1], sigma[2], length.out = 100)
-    curve_uncert = rep(mean(curve_uncert), 100)
-  } else if (param_to_predict == "curve_uncert") {
-    offset_magnitude = rep(mean(offset), 100)
-    measurement_error = rep(mean(sigma), 100)
-    curve_uncert = seq(curve_uncert[1], curve_uncert[2], length.out = 100)
-  } else {
-    return(warning("incorrect parmaeter name, please check"))
-  }
-  
-  predict_table <- data.frame(offset_magnitude, measurement_error, curve_uncert)
-  predict_table
-  
-}
-```
-
-```{r}
-## Test
-
-test <- set_up_predicts_tab(offset = c(0, 50), sigma = c(8, 32), curve_uncert = c(10, 20))
-set_up_predicts_tab(param_to_predict = "sigma", offset = c(0, 25), 
-                    sigma = c(8, 32), curve_uncert = c(10, 20))
-set_up_predicts_tab(param_to_predict = "curve_uncert", offset = c(0, 25), 
-                    sigma = c(8, 32), curve_uncert = c(10, 20))
-set_up_predicts_tab(param_to_predict = "potato", offset = c(0, 25), 
-                    sigma = c(8, 32), curve_uncert = c(10, 20))
-```
-
-```{r}
-execute_predictions <- function(pred_table, is_positive, hpd_area) {
-  ### The function takes on a prediction table to fill, re-organizes the model results and applies a prediction
-  ### Assumes that the input table is a prediction table and that the is_pos and hpd_area arguments are logical and c(68, 95) respectively.
-  
-  model_results <- single_cals_curve_uncert_regr %>%
-    filter(str_detect(model, "os") & 
-             str_detect(model, hpd_area) &
-             is_pos == is_positive)
-  
-  model_results <- model_results$model_results[[1]]
-  
-  
-  pred_table <- pred_table %>%
-    mutate(
-      ratio_accurate = predict(model_results, 
-                                  newdata = pred_table,
-                                  type = "response") 
-  )
-  
-  pred_table
-}
-```
-
-```{r}
-test1 <- execute_predictions(test, is_positive = TRUE, hpd_area = "68")
-```
-
-```{r}
-summarize_sims <- function(sim_results, hpd_area, offset, sigma, curve_uncert, 
-                           grouping_param, rounding) {
-  sim_results <- sim_results %>%
-    filter(
-      between(offset_magnitude, offset[1], offset[2]) &
-      between(measurement_error, sigma[1], sigma[2]) &
-      between(curve_uncert, curve_uncert[1], curve_uncert[2])) %>%
-    select(starts_with(grouping_param), ends_with(hpd_area)) %>%
-    rename("var_to_plot" = 1, "result_accurate" = 2) %>%
-    mutate(var_to_plot = plyr::round_any(var_to_plot, rounding)) %>%
-    group_by(var_to_plot) %>%
-    summarize(
-      ratio_accurate = mean(result_accurate)
-    )
-  
-  sim_results
-}
-```
-
-```{r}
-test2 <- summarize_sims(single_cals_w_curve_uncert, hpd_area = "68", offset = c(0,50),
-                        sigma = c(8, 32), curve_uncert = c(10, 20), 
-                        grouping_param = "offset_magnitude", rounding = 4)
-summarize_sims(single_cals_w_curve_uncert, hpd_area = "68", offset = c(0,50),
-               sigma = c(8, 32), curve_uncert = c(10, 20), 
-               grouping_param = "measurement_error", rounding = 2)
-```
-
-```{r}
-plot_logistic <- function(pred_df, sims_df, xlab, ylab, acc_target) {
-  plot <- ggplot(data = sims_df) +
-    geom_hline(yintercept = acc_target, color = "grey70") +
-    geom_bar(aes(x = var_to_plot, y = ratio_accurate), stat = 'identity') +
-    geom_line()
-  
-  plot
-}
-```
-
-```{r}
-plot_logistic(pred_df = test1, sims_df = test2, acc_target = 0.68)
-```
-
-
-
-
-
-```{r}
-## Get the numbers to underpin drawing of curves. Courtesy of Allan Cameron, over here: https://stackoverflow.com/questions/65081329/multiple-logistic-regression-ggplot-with-groups
-
-logistic_predicts_pos <- data.frame(
-  offset_magnitude = rep(seq(0, 50, length.out = 50), 16),
-  measurement_error = c(rep(8, 200), rep(16, 200), rep(24, 200), rep(32, 200)),
-  curve_uncert = rep(c(rep(8, 50), rep(12, 50), rep(16, 50), rep(20, 50)), 4)
-  ) 
-
-logistic_predicts_pos <- logistic_predicts_pos %>%
-  mutate(
-    ratio_accurate_68 = predict(single_cals_curve_uncert_regr$model_results[[27]], 
-                                newdata = logistic_predicts_pos,
-                                type = "response") ,
-    hpd_95_expect = predict(single_cals_curve_uncert_regr$model_results[[28]], 
-                 newdata = logistic_predicts_pos,
-                 type = "response")
-  ) %>%
-  filter(measurement_error == 24 & curve_uncert == 12)
-
-```
-
-
-```{r}
 single_cals_curve_uncert_mod %>%
   filter(offset_magnitude > 0) %>%
   mutate(
-    offset_magnitude = plyr::round_any(offset_magnitude, 5),
-    measurement_error = plyr::round_any(measurement_error, 8),  ##These will not be exact, but hopefully good enough for visualization
-    curve_uncert = plyr::round_any(curve_uncert, 4) ## Ditto
-      ) %>%
-  group_by(offset_magnitude, measurement_error, curve_uncert) %>%
-  summarize(
-    ratio_accurate_68 = mean(accuracy_68),
-    ratio_accurate_95 = mean(accuracy_95)
+    offset_magnitude = plyr::round_any(offset_magnitude, 2)
   ) %>%
-  filter(measurement_error == 24 & curve_uncert == 12) %>%
+  group_by(offset_magnitude) %>%
+  summarize(
+    ratio_accurate_68 = mean(accuracy_68)
+  ) %>%
   ggplot(aes(x = offset_magnitude, y = ratio_accurate_68)) +
-  geom_bar(stat = "identity") +
-  geom_line(data = logistic_predicts_pos)
-
+  geom_bar(stat = 'identity') +
+  geom_line(data = pred_offset_pos_acc68)
 
 ```
+
+
 
 
