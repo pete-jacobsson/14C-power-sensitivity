@@ -1262,6 +1262,24 @@ This will need to be made way prettier, but the parameters already look better. 
 Now that we have a model with promising looking parameters, lets visualize it. This is always a little bit of a headache once we get to multiple regression, especially as we want to plot a few visuals to see if our predictions actually match the data they originated from. To simplify the process, I'll use the jtools package. I went off to look for it, after having spent quite some time trying to reinvent it (:P).
 
 ```{r}
+predict_model_results <- function(offset_dir, hpd_area, variable, pred_values,
+                                  offset_range, sigma_range, curve_range) {
+  
+  offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
+    filter(str_detect(model, "offset_sigma_curve_interact_os_acc")) %>%
+    mutate(is_pos = if_else(is_pos, "positive", "negative")) %>% ## Change type for filtering
+    filter(str_detect(is_pos, offset_dir) & str_detect(model, hpd_area))
+  
+  offset_curve_sigma_os
+}
+
+plot_model_results(offset_dir = "pos", hpd_area = "68")
+
+
+
+offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
+  filter(str_detect(model, "offset_sigma_curve_interact_os_acc"))
+
 pred_offset_pos_acc68 <- make_predictions(offset_curve_sigma_os$model_results[[3]],
                                           pred = "offset_magnitude",
                                           pred.values = seq(0, 50)) %>%
@@ -1277,8 +1295,17 @@ single_cals_curve_uncert_mod %>%
     ratio_accurate_68 = mean(accuracy_68)
   ) %>%
   ggplot(aes(x = offset_magnitude, y = ratio_accurate_68)) +
-  geom_bar(stat = 'identity') +
-  geom_line(data = pred_offset_pos_acc68)
+  geom_bar(stat = 'identity', fill = "steelblue") +
+  geom_line(data = pred_offset_pos_acc68) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", linewidth = 0.5),
+    text = element_text(family = "Corbel")#,
+   #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    )
 
 ```
 
