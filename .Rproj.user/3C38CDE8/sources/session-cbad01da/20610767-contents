@@ -1,9 +1,0 @@
-library(jtools)
-
-offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
-  filter(str_detect(model, "offset_sigma_curve_interact_os_acc"))
-
-summary(offset_curve_sigma_os$model_results[[1]])
-
-make_predictions(offset_curve_sigma_os$model_results[[1]],
-                 pred = "offset_magnitude")

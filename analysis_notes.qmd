@@ -1262,24 +1262,96 @@ This will need to be made way prettier, but the parameters already look better. 
 Now that we have a model with promising looking parameters, lets visualize it. This is always a little bit of a headache once we get to multiple regression, especially as we want to plot a few visuals to see if our predictions actually match the data they originated from. To simplify the process, I'll use the jtools package. I went off to look for it, after having spent quite some time trying to reinvent it (:P).
 
 ```{r}
-predict_model_results <- function(offset_dir, hpd_area, variable, pred_values,
-                                  offset_range, sigma_range, curve_range) {
+offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
+  filter(str_detect(model, "offset_sigma_curve_interact_os_acc"))
+
+
+predict_model_results_osc <- function(offset_dir, hpd_area, variable, 
+                                      variable_range) {
+  ##Function to simplify prediction generation
+  ##Takes on offset_dir and hpd_area, which simplify the results table,
+  ##Takes on variable name as string and variable range as a sequence
+  ##Assumes offset dir, hpd_area, and variable name provided are all correct
+  
   
   offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
     filter(str_detect(model, "offset_sigma_curve_interact_os_acc")) %>%
     mutate(is_pos = if_else(is_pos, "positive", "negative")) %>% ## Change type for filtering
     filter(str_detect(is_pos, offset_dir) & str_detect(model, hpd_area))
   
-  offset_curve_sigma_os
+  predicted_results <- make_predictions(offset_curve_sigma_os$model_results[[1]],
+                                        pred = variable,
+                                        pred.values = variable_range)
+  
+  predicted_results
 }
 
-plot_model_results(offset_dir = "pos", hpd_area = "68")
+```
+
+
+```{r}
+## Function tests
+predict_model_results_osc(offset_dir = "pos", hpd_area = "68", 
+                          variable = "offset_magnitude", 
+                          variable_range = seq(0, 50))
+
+predict_model_results_osc(offset_dir = "neg", hpd_area = "95", 
+                          variable = "curve_uncert", 
+                          variable_range = seq(10, 35))
+
+predict_model_results_osc(offset_dir = "pos", hpd_area = "95", 
+                          variable = "measurement_error", 
+                          variable_range = seq(8, 32))
+
+```
+
+
+```{r}
+plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
+                                        rounding, xlab) {
+  ##This function plots the simulation results for the purposes of the results graphing
+  
+  single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv")
+  
+  single_cals_curve_uncert_mod %>%
+    rename(variable_to_plot = variable, hpd_to_plot = hpd_area) %>%
+    filter(variable_to_plot >= range_to_plot[1] & 
+             variable_to_plot <= range_to_plot) %>%
+    mutate(
+      variable_to_plot = plyr::round_any(variable_to_plot, rounding)
+    ) %>%
+    select(variable_to_plot, hpd_to_plot) %>%
+    group_by(variable_to_plot) %>%
+    summarize(
+      ratio_accurate = mean(hpd_to_plot)
+    ) %>%
+    ggplot(aes(x = variable_to_plot, y = ratio_accurate)) +
+    geom_bar(stat = 'identity')
+  
+  
+}
+```
+
+
+```{r}
+plot_simulation_results_osc(range_to_plot = c(10, 15), hpd_area = "accuracy_68",
+                            variable = "curve_uncert", rounding = 5)
+plot_simulation_results_osc(range_to_plot = c(24, 50), hpd_area = "accuracy_95",
+                            variable = "measurement_error", rounding = 2.5)
+plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
+                            variable = "offset_magnitude", rounding = 2)
 
 
 
-offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
-  filter(str_detect(model, "offset_sigma_curve_interact_os_acc"))
+```
 
+
+
+
+
+
+
+```{r}
 pred_offset_pos_acc68 <- make_predictions(offset_curve_sigma_os$model_results[[3]],
                                           pred = "offset_magnitude",
                                           pred.values = seq(0, 50)) %>%
