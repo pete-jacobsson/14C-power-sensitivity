@@ -1326,7 +1326,20 @@ plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
       ratio_accurate = mean(hpd_to_plot)
     ) %>%
     ggplot(aes(x = variable_to_plot, y = ratio_accurate)) +
-    geom_bar(stat = 'identity')
+    geom_bar(stat = 'identity', fill = "steelblue") +
+    theme_bw() +
+    theme(
+      panel.grid.minor = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.border = element_blank(),
+      axis.line = element_line(colour = "grey50", linewidth = 0.5),
+      text = element_text(family = "Corbel")#,
+      #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+      ) +
+    labs(
+      y = "Ratio accurate",
+      x = xlab
+    )
   
   
 }
@@ -1335,11 +1348,14 @@ plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
 
 ```{r}
 plot_simulation_results_osc(range_to_plot = c(10, 15), hpd_area = "accuracy_68",
-                            variable = "curve_uncert", rounding = 5)
+                            variable = "curve_uncert", rounding = 5,
+                            xlab = "Calibration curve uncertainty")
 plot_simulation_results_osc(range_to_plot = c(24, 50), hpd_area = "accuracy_95",
-                            variable = "measurement_error", rounding = 2.5)
+                            variable = "measurement_error", rounding = 2.5,
+                            xlab = "Measurement uncertainty")
 plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
-                            variable = "offset_magnitude", rounding = 2)
+                            variable = "offset_magnitude", rounding = 2,
+                            xlab = "Offset Magnitude")
 
 
 
