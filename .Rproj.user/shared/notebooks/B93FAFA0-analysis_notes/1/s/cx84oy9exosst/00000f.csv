@@ -1,6 +1,3 @@
-"0","offset_curve_sigma_os <- readRDS(""single_cals_curve_uncert_regr.rds"") %>%"
-"0","  filter(str_detect(model, ""offset_sigma_curve_interact_os_acc""))"
-"0",""
 "0",""
 "0","predict_model_results_osc <- function(offset_dir, hpd_area, variable, "
 "0","                                      variable_range) {"

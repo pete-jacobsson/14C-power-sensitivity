@@ -1405,38 +1405,95 @@ plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
 
 
 
+Now I can actually visualize all the models.
+
+```{r}
+## Pos 68%
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "offset_magnitude",
+                           range = c(0, 50), rounding = 2.5,
+                           xlab = "Offset magnitude")
+  
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "measurement_error",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement error")
+    
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "curve_uncert",
+                           range = c(10, 30), rounding = 2.5,
+                           xlab = "Curve uncertainty")
+```
+For the Positive 68% HPD scenario we have a good prediction on the Offset magnitude, good prediction on the effects of the measurement error, but the prediction for the Cure uncertainty begins to deteriorate for ucnertainties of over 20 14C years.
 
 
 
 ```{r}
-pred_offset_pos_acc68 <- make_predictions(offset_curve_sigma_os$model_results[[3]],
-                                          pred = "offset_magnitude",
-                                          pred.values = seq(0, 50)) %>%
-  rename("ratio_accurate_68" = 1)
+## Pos 95%
 
-single_cals_curve_uncert_mod %>%
-  filter(offset_magnitude > 0) %>%
-  mutate(
-    offset_magnitude = plyr::round_any(offset_magnitude, 2)
-  ) %>%
-  group_by(offset_magnitude) %>%
-  summarize(
-    ratio_accurate_68 = mean(accuracy_68)
-  ) %>%
-  ggplot(aes(x = offset_magnitude, y = ratio_accurate_68)) +
-  geom_bar(stat = 'identity', fill = "steelblue") +
-  geom_line(data = pred_offset_pos_acc68) +
-  theme_bw() +
-  theme(
-    panel.grid.minor = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.border = element_blank(),
-    axis.line = element_line(colour = "grey50", linewidth = 0.5),
-    text = element_text(family = "Corbel")#,
-   #axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
-    )
-
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "offset_magnitude",
+                           range = c(0, 50), rounding = 2.5,
+                           xlab = "Offset magnitude")
+  
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "measurement_error",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement error")
+    
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "curve_uncert",
+                           range = c(10, 30), rounding = 2.5,
+                           xlab = "Curve uncertainty")
 ```
+
+For the Positive 95% scenario we have a good prediction on offset magnitude, not as good prediction on the impacts of measurement error, and a somewhat biased prediction on impacts of curve uncertainty.
+
+
+
+```{r}
+## Neg 68%
+
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_68",
+                           variable = "offset_magnitude",
+                           range = c(-50, 0), rounding = 2.5,
+                           xlab = "Offset magnitude")
+  
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_68",
+                           variable = "measurement_error",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement error")
+    
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_68",
+                           variable = "curve_uncert",
+                           range = c(10, 30), rounding = 2.5,
+                           xlab = "Curve uncertainty")
+```
+For the 68% neg scenario we have a good prediction for Offset Magnitude (except when offsets are close to zero), good prediction on measurement uncertainty and a similar issue with prediction being limited as curve uncertainty increases.
+
+
+
+```{r}
+## Neg 95%
+
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
+                           variable = "offset_magnitude",
+                           range = c(-50, 0), rounding = 2.5,
+                           xlab = "Offset magnitude")
+  
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
+                           variable = "measurement_error",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement error")
+    
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
+                           variable = "curve_uncert",
+                           range = c(10, 30), rounding = 2.5,
+                           xlab = "Curve uncertainty")
+```
+The 95% neg scenario fits in a similar way to the 95% pos scenario: good offset fit, poor measurement uncertainty fit, and a biased-but-trailing curve uncertainty fit. 
+
 
 
 
