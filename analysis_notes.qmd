@@ -8,6 +8,7 @@ format: html
 library(tidyverse)
 library(broom)
 library(jtools)
+library(rstan)
 
 ```
 
@@ -1493,6 +1494,8 @@ plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
                            xlab = "Curve uncertainty")
 ```
 The 95% neg scenario fits in a similar way to the 95% pos scenario: good offset fit, poor measurement uncertainty fit, and a biased-but-trailing curve uncertainty fit. 
+
+So the model does well on offset magnitudes, but leaves a little to be desired as far as measurement error and curve uncertainty impacts are concerned. The one particular point of interest is that things go wrong differently for the 95 and 68% HPD areas. There are a few options here. First, I can try getting the models to work - perhaps through experimentiang with different interactions. The second option is to use different model specs for the 95% and 68% HPD areas. This could give useful insights in case of differences between the models. Third option is to go straight to predicting and turning back if the predictions on unknown data have systematic issues. Though what I might begin with is plotting out simpler models to check that the logistic can capture the shapes of the simulated distributions we're dealing with. OK, plan!
 
 
 
