@@ -1,4 +1,5 @@
 "0",""
-"0","predict_model_results_osc(offset_dir = ""neg"", hpd_area = ""95"", "
-"0","                          variable = ""curve_uncert"", "
-"0","                          variable_range = seq(10, 35))"
+"0","predict_model_results_osc(offset_dir = ""pos"", hpd_area = ""95"", "
+"0","                          model_name = ""sc"","
+"0","                          variable = ""measurement_error"", "
+"0","                          variable_range = seq(8, 32))"

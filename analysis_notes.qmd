@@ -919,6 +919,12 @@ offset_sigma_curve_interact_os_acc68 <- function(singles_data) {
       data = singles_data, family = binomial(link = 'logit'))
 }
 
+offset_sigma_curve_interact_os_cs_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * measurement_error + curve_uncert * measurement_error, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
 ```
 
 ```{r}
@@ -984,10 +990,31 @@ offset_sigma_curve_interact_os_acc95 <- function(singles_data) {
       data = singles_data, family = binomial(link = 'logit'))
 }
 
+offset_sigma_curve_interact_os_cs_acc95 <- function(singles_data) {
+  glm(accuracy_95 ~ measurement_error + offset_magnitude + curve_uncert +
+        offset_magnitude * measurement_error + curve_uncert * measurement_error, 
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+
 ```
 
-
+### Model simulation lives here
 ```{r}
+### The first two items are a later addition if further models need added
+
+### Now load up the model data again, nest it and build the model functions
+single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv")
+
+##Nesting
+single_cals_curve_uncert_nest <- single_cals_curve_uncert_mod %>%
+  mutate(is_pos = if_else(offset_magnitude >= 0, TRUE, FALSE)) %>%
+  select(curve_uncert, measurement_error, offset_magnitude, accuracy_68,
+         accuracy_95, is_pos) %>%
+  group_by(is_pos) %>%
+  nest()
+
+
 ### Now lets run the models...
 single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
   mutate(
@@ -1012,8 +1039,12 @@ single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
     offset_sigma_curve_interact_os_acc68 = 
       map(data, offset_sigma_curve_interact_os_acc68),
     offset_sigma_curve_interact_os_acc95 = 
-      map(data, offset_sigma_curve_interact_os_acc95)
-  )
+      map(data, offset_sigma_curve_interact_os_acc95),
+    offset_sigma_curve_interact_os_cs_acc68 = 
+      map(data, offset_sigma_curve_interact_os_cs_acc68),
+    offset_sigma_curve_interact_os_cs_acc95 = 
+      map(data, offset_sigma_curve_interact_os_cs_acc95)
+    )
 
 ```
 
@@ -1264,8 +1295,8 @@ Now that we have a model with promising looking parameters, lets visualize it. T
 
 ```{r}
 
-predict_model_results_osc <- function(offset_dir, hpd_area, variable, 
-                                      variable_range) {
+predict_model_results_osc <- function(offset_dir, hpd_area, model_name,
+                                      variable, variable_range) {
   ##Function to simplify prediction generation
   ##Takes on offset_dir and hpd_area, which simplify the results table,
   ##Takes on variable name as string and variable range as a sequence
@@ -1273,7 +1304,7 @@ predict_model_results_osc <- function(offset_dir, hpd_area, variable,
   
   
   offset_curve_sigma_os <- readRDS("single_cals_curve_uncert_regr.rds") %>%
-    filter(str_detect(model, "offset_sigma_curve_interact_os_acc")) %>%
+    filter(str_detect(model, model_name)) %>%
     mutate(is_pos = if_else(is_pos, "positive", "negative")) %>% ## Change type for filtering
     filter(str_detect(is_pos, offset_dir) & str_detect(model, hpd_area))
   
@@ -1289,15 +1320,18 @@ predict_model_results_osc <- function(offset_dir, hpd_area, variable,
 
 ```{r}
 ## Function tests
-predict_model_results_osc(offset_dir = "pos", hpd_area = "68", 
+predict_model_results_osc(offset_dir = "pos", hpd_area = "68",
+                          model_name = "offset_curve_interact",
                           variable = "offset_magnitude", 
                           variable_range = seq(0, 50))
 
 predict_model_results_osc(offset_dir = "neg", hpd_area = "95", 
+                          model_name = "oc_sc_ocs",
                           variable = "curve_uncert", 
                           variable_range = seq(10, 35))
 
 predict_model_results_osc(offset_dir = "pos", hpd_area = "95", 
+                          model_name = "sc",
                           variable = "measurement_error", 
                           variable_range = seq(8, 32))
 
@@ -1361,7 +1395,7 @@ plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
 
 
 ```{r}
-plot_model_predictions_ocs <- function(offset_dir, hpd_area, variable, 
+plot_model_predictions_ocs <- function(offset_dir, hpd_area, model_name, variable, 
                                        range, rounding, xlab) {
   ## This function wraps predict_model_results and plot_simulation_results and plots prediction over simulation.
   ## parameters and assumptions as per underpinning functions.
@@ -1373,6 +1407,7 @@ plot_model_predictions_ocs <- function(offset_dir, hpd_area, variable,
   
   predicts_tab <- predict_model_results_osc(offset_dir = offset_dir,
                                             hpd_area = hpd_for_predict, 
+                                            model_name = model_name,
                                             variable = variable, 
                                             variable_range = seq(range[1],
                                                                  range[2]))
@@ -1389,17 +1424,20 @@ plot_model_predictions_ocs <- function(offset_dir, hpd_area, variable,
 
 ```{r}
 plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           model_name = "act_oc_sc_acc",
                            variable = "offset_magnitude",
                            range = c(0, 50), rounding = 2.5,
                            xlab = "Offset magnitude")
   
-plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_68",
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
                            variable = "measurement_error",
+                           model_name = "os_cs",
                            range = c(8, 32), rounding = 2,
                            xlab = "Measurement error")
     
 plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
                            variable = "curve_uncert",
+                           model_name = "oc_sc_ocs",
                            range = c(10, 30), rounding = 2.5,
                            xlab = "Curve uncertainty")
 ```
@@ -1498,14 +1536,9 @@ The 95% neg scenario fits in a similar way to the 95% pos scenario: good offset 
 So the model does well on offset magnitudes, but leaves a little to be desired as far as measurement error and curve uncertainty impacts are concerned. The one particular point of interest is that things go wrong differently for the 95 and 68% HPD areas. There are a few options here. First, I can try getting the models to work - perhaps through experimentiang with different interactions. The second option is to use different model specs for the 95% and 68% HPD areas. This could give useful insights in case of differences between the models. Third option is to go straight to predicting and turning back if the predictions on unknown data have systematic issues. Though what I might begin with is plotting out simpler models to check that the logistic can capture the shapes of the simulated distributions we're dealing with. OK, plan!
 
 
-## Part 11 Try again agin. This time go back to the basic elements.
+## Part 11 Try again agin.
 
-Start with the 95% HPD models.
-```{r}
-plot_simulation_results_osc(range_to_plot = c(0, 30), "accuracy_95", 
-                            "measurement_error", rounding = 2,
-                            xlab = "Measurment uncertainty")
-```
+For going back to basics I need to modify a few things in the functions. First of all, I want to see a few more models. This means evolving the visualization functions above to take on input in the form of different models (rather than just hacking down to the one we hoped would have worked).
 
 
 
