@@ -1538,9 +1538,92 @@ So the model does well on offset magnitudes, but leaves a little to be desired a
 
 ## Part 11 Try again agin.
 
-For going back to basics I need to modify a few things in the functions. First of all, I want to see a few more models. This means evolving the visualization functions above to take on input in the form of different models (rather than just hacking down to the one we hoped would have worked).
+For going back to basics I need to modify a few things in the functions. First of all, I want to see a few more models. This means evolving the visualization functions above to take on input in the form of different models (rather than just hacking down to the one we hoped would have worked). Lets kick off with the model that includes all three potential predictors, but does not involve interactions. The AIC/BIC on it is not as good as on some other models, but it provides a starting point to thinking about the quality of fit. 
 
+```{r}
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "offset_magnitude",
+                           model_name = "offset_sigma_curve_acc",
+                           range = c(0, 50), rounding = 2,
+                           xlab = "Offset Magnitude")
 
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "offset_magnitude",
+                           model_name = "os_acc",
+                           range = c(0, 50), rounding = 2,
+                           xlab = "Offset Magnitude")
 
+```
+Difference on the regression for the Offset magnitude effect is minimal.
+
+```{r}
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "measurement_error",
+                           model_name = "offset_sigma_curve_acc",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement Error")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "measurement_error",
+                           model_name = "os_acc",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement Error")
+```
+
+```{r}
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "curve_uncert",
+                           model_name = "offset_sigma_curve_acc",
+                           range = c(4, 40), rounding = 2,
+                           xlab = "Curve uncertainty")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "curve_uncert",
+                           model_name = "os_acc",
+                           range = c(4, 40), rounding = 2,
+                           xlab = "Curve uncertainty")
+```
+
+```{r}
+### Now for the 95% HPDs
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "offset_magnitude",
+                           model_name = "offset_sigma_curve_acc",
+                           range = c(0, 50), rounding = 2,
+                           xlab = "Offset Magnitude")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "offset_magnitude",
+                           model_name = "os_acc",
+                           range = c(0, 50), rounding = 2,
+                           xlab = "Offset Magnitude")
+```
+
+```{r}
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "measurement_error",
+                           model_name = "offset_sigma_curve_acc",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement Error")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "measurement_error",
+                           model_name = "os_acc",
+                           range = c(8, 32), rounding = 2,
+                           xlab = "Measurement Error")
+```
+```{r}
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "curve_uncert",
+                           model_name = "offset_sigma_curve_acc",
+                           range = c(4, 40), rounding = 2,
+                           xlab = "Curve uncertainty")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "curve_uncert",
+                           model_name = "os_acc",
+                           range = c(4, 40), rounding = 2,
+                           xlab = "Curve uncertainty")
+```
 
 
