@@ -1625,5 +1625,24 @@ plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
                            range = c(4, 40), rounding = 2,
                            xlab = "Curve uncertainty")
 ```
+So a few observations.
 
+First, whatever the model choice, the 95% measurement error estimate just does not work. While the impact is less in models without the interaction between the Offset Magnitude and Measurement Error, it still suffers from a systematic error. The situation is better for the 68% HPD areas, there, however, the estimates are wrong for the effects of calibration curve uncertainty. These issues doe make sense to a degree. From the perspective of calibration, the uncertainties on the measurement error and curve uncertainty are additive. However, in research practice, there is a major difference, in that we have some control over measurement precision, but little to no control over the calibration curve precision. 
 
+First, lets have a look at how the curve uncertainty is distributed.
+
+```{r}
+single_cals_curve_uncert_mod %>%
+  ggplot(aes(x = curve_uncert)) +
+  geom_histogram(fill = "steelblue", bins = 20) +
+  theme_classic()
+```
+This begins highlighting some potential roots of the problem - the values of curve uncertainty are fairly clustered and variable. This makes me suspect that there might be issues stemming from this. In particular, the clumpy clustering and very few points as we go beyond 25 14C yrs uncertainty implies potential issues kicking in. Lets have a look at how things look through time.
+
+```{r}
+single_cals_curve_uncert_mod %>%
+  ggplot(aes(x = target_year, y = curve_uncert)) +
+  geom_point() +
+  theme_classic()
+```
+So we might want to re-think this again. Options are going in straight with a simple offset magnitude and measurement uncertainty model. The drawback will be loss of curve information, which we also want to capture. I could also run more simulations - say increase the number of sims to 200k, thus enabling a switch back to the period-based model. This may be a more reasonable approach. 
