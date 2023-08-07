@@ -843,7 +843,8 @@ write_csv(single_cals_curve_uncert_mod, "single_cals_curve_uncert_mod.csv")
 
 ```{r}
 ### Now load up the model data again, nest it and build the model functions
-single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv")
+single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv") %>%
+  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
 ```
 
 ```{r}
@@ -862,68 +863,79 @@ single_cals_curve_uncert_nest <- single_cals_curve_uncert_mod %>%
 offset_curve_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ offset_magnitude + curve_uncert, data = singles_data, 
       family = binomial)
-}
+  }
 
 sigma_curve_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + curve_uncert, data = singles_data, 
       family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert, 
       data = singles_data, family = binomial(link = 'logit'))
-}
+  }
 
 offset_curve_interact_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ offset_magnitude + curve_uncert + 
         offset_magnitude * curve_uncert, 
       data = singles_data, 
       family = binomial)
-}
-
+  }
+  
 sigma_curve_interact_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + curve_uncert +
         measurement_error * curve_uncert, 
       data = singles_data, 
       family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_interact_sc_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
         measurement_error * curve_uncert, 
       data = singles_data, family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_interact_oc_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
         offset_magnitude * curve_uncert, 
       data = singles_data, family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_interact_oc_sc_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
         offset_magnitude * curve_uncert + measurement_error * curve_uncert, 
       data = singles_data, family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_interact_oc_sc_ocs_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
         offset_magnitude * curve_uncert + measurement_error * curve_uncert +
         offset_magnitude * measurement_error * curve_uncert, 
       data = singles_data, family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_interact_os_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
         offset_magnitude * measurement_error, 
       data = singles_data, family = binomial(link = 'logit'))
-}
+  }
 
 offset_sigma_curve_interact_os_cs_acc68 <- function(singles_data) {
   glm(accuracy_68 ~ measurement_error + offset_magnitude + curve_uncert +
         offset_magnitude * measurement_error + curve_uncert * measurement_error, 
       data = singles_data, family = binomial(link = 'logit'))
+  }
+
+offset_sigma_curve_comb_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude + sigma_curve_uncert,
+      data = singles_data, family = binomial(link = 'logit'))
 }
+
+offset_sigma_curve_comb_interact_acc68 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude + sigma_curve_uncert +
+        offset_magnitude * sigma_curve_uncert,
+      data = singles_data, family = binomial(link = 'logit'))
+  }
 
 ```
 
@@ -996,6 +1008,17 @@ offset_sigma_curve_interact_os_cs_acc95 <- function(singles_data) {
       data = singles_data, family = binomial(link = 'logit'))
 }
 
+offset_sigma_curve_comb_acc95 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude + sigma_curve_uncert,
+      data = singles_data, family = binomial(link = 'logit'))
+}
+
+offset_sigma_curve_comb_interact_acc95 <- function(singles_data) {
+  glm(accuracy_68 ~ offset_magnitude + sigma_curve_uncert +
+        offset_magnitude * sigma_curve_uncert,
+      data = singles_data, family = binomial(link = 'logit'))
+  }
+
 
 ```
 
@@ -1004,13 +1027,14 @@ offset_sigma_curve_interact_os_cs_acc95 <- function(singles_data) {
 ### The first two items are a later addition if further models need added
 
 ### Now load up the model data again, nest it and build the model functions
-single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv")
+single_cals_curve_uncert_mod <- read_csv("single_cals_curve_uncert_mod.csv") %>%
+  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
 
 ##Nesting
 single_cals_curve_uncert_nest <- single_cals_curve_uncert_mod %>%
   mutate(is_pos = if_else(offset_magnitude >= 0, TRUE, FALSE)) %>%
   select(curve_uncert, measurement_error, offset_magnitude, accuracy_68,
-         accuracy_95, is_pos) %>%
+         accuracy_95, is_pos, sigma_curve_uncert) %>%
   group_by(is_pos) %>%
   nest()
 
@@ -1043,7 +1067,16 @@ single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
     offset_sigma_curve_interact_os_cs_acc68 = 
       map(data, offset_sigma_curve_interact_os_cs_acc68),
     offset_sigma_curve_interact_os_cs_acc95 = 
-      map(data, offset_sigma_curve_interact_os_cs_acc95)
+      map(data, offset_sigma_curve_interact_os_cs_acc95),
+    offset_sigma_curve_comb_acc68 =
+      map(data, offset_sigma_curve_comb_acc68),
+    offset_sigma_curve_comb_acc95 =
+      map(data, offset_sigma_curve_comb_acc95),
+        offset_sigma_curve_comb_interact_acc68 =
+      map(data, offset_sigma_curve_comb_interact_acc68),
+    offset_sigma_curve_comb_acc95 =
+      map(data, offset_sigma_curve_comb_interact_acc95)
+    
     )
 
 ```
@@ -1645,4 +1678,4 @@ single_cals_curve_uncert_mod %>%
   geom_point() +
   theme_classic()
 ```
-So we might want to re-think this again. Options are going in straight with a simple offset magnitude and measurement uncertainty model. The drawback will be loss of curve information, which we also want to capture. I could also run more simulations - say increase the number of sims to 200k, thus enabling a switch back to the period-based model. This may be a more reasonable approach. 
+A different way to approach the problem will be to combine uncertainty from the calibration curve and the measurement error and check how well these work as a predictor. After all, at least in terms of simulating in the radiocarbon space (concentrations of 14C and the like) these should be interchangeable. 
