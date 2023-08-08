@@ -1009,12 +1009,12 @@ offset_sigma_curve_interact_os_cs_acc95 <- function(singles_data) {
 }
 
 offset_sigma_curve_comb_acc95 <- function(singles_data) {
-  glm(accuracy_68 ~ offset_magnitude + sigma_curve_uncert,
+  glm(accuracy_95 ~ offset_magnitude + sigma_curve_uncert,
       data = singles_data, family = binomial(link = 'logit'))
 }
 
 offset_sigma_curve_comb_interact_acc95 <- function(singles_data) {
-  glm(accuracy_68 ~ offset_magnitude + sigma_curve_uncert +
+  glm(accuracy_95 ~ offset_magnitude + sigma_curve_uncert +
         offset_magnitude * sigma_curve_uncert,
       data = singles_data, family = binomial(link = 'logit'))
   }
@@ -1074,7 +1074,7 @@ single_cals_curve_uncert_regr <- single_cals_curve_uncert_nest %>%
       map(data, offset_sigma_curve_comb_acc95),
         offset_sigma_curve_comb_interact_acc68 =
       map(data, offset_sigma_curve_comb_interact_acc68),
-    offset_sigma_curve_comb_acc95 =
+    offset_sigma_curve_comb_interact_acc95 =
       map(data, offset_sigma_curve_comb_interact_acc95)
     
     )
@@ -1237,7 +1237,7 @@ Now that we have some results, lets start checking how well they fit the simulat
 For the purpose of udnerstanding lets go back to the actual equation that's getting used. Lets begin by looking back at the equation behind logistic regression and what it means for us in this context:
 
 $$
-P(x) = \frac{1}{1 + e^{-(A_0 + A_1 x_1 + A_2 x_2 +...+A_n A_{n+1}x_1x_2+...)}}
+P(x) = \frac{1}{1 + e^{-(A_0 + A_1 x_1 + A_2 x_2 +...+A_n x_1x_2+...)}}
 $$
 Lets read this thing. The bigger the value in the brackets above the *e*, the closer the denominator to one and therefore the closer the probability of the result being correct (as the exponential races to zero). By contrast, the smaller the brackets in the denominator, the bigger the exponential result, and the whole thing gets closer to zero. Lets check what this gives us. With this we can start plotting the regression lines using the estimates:
 ```{r}
@@ -1678,4 +1678,113 @@ single_cals_curve_uncert_mod %>%
   geom_point() +
   theme_classic()
 ```
+
+## Part 12 Using combined Measurement uncertainty and Curve uncertainty
 A different way to approach the problem will be to combine uncertainty from the calibration curve and the measurement error and check how well these work as a predictor. After all, at least in terms of simulating in the radiocarbon space (concentrations of 14C and the like) these should be interchangeable. 
+
+The models using those parameters have similar AIC to other options. In terms of parameter values, we can view the outcomes below:
+
+```{r}
+##Get the results out
+
+offset_curve_sigma_comb_params <- readRDS("single_cals_curve_uncert_regr.rds") %>%
+  filter(str_detect(model, "comb_acc")) %>%
+  mutate(model_results = map(model_results, tidy)) %>%
+  unnest(cols = c(model_results))
+```
+
+```{r}
+## Visualize version without interaction
+  offset_curve_sigma_comb_params %>%
+  mutate(
+    is_pos = if_else(is_pos, "pos_offset", "neg_offset"),
+    hpd_area = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
+    ) %>%
+  ggplot(aes(x = is_pos, y = estimate)) +
+  geom_hline(yintercept = 0, color = "grey80") +
+  geom_point(stat = "identity") +
+  geom_linerange(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error)) +
+  facet_grid(rows = vars(term), cols = vars(hpd_area), scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    ) +
+  labs(
+    subtitle = "68.2% HPD"
+  )
+```
+
+
+
+
+
+
+
+```{r}
+##Get the results out
+
+offset_curve_sigma_comb_interact_params <- readRDS("single_cals_curve_uncert_regr.rds") %>%
+  filter(str_detect(model, "comb_inter")) %>%
+  mutate(model_results = map(model_results, tidy)) %>%
+  unnest(cols = c(model_results))
+```
+
+```{r}
+## Visualize version with interaction
+  offset_curve_sigma_comb_interact_params %>%
+  mutate(
+    is_pos = if_else(is_pos, "pos_offset", "neg_offset"),
+    hpd_area = if_else(str_detect(model, "68"), "68.2% HPD", "95.4% HPD")
+    ) %>%
+  ggplot(aes(x = is_pos, y = estimate)) +
+  geom_hline(yintercept = 0, color = "grey80") +
+  geom_point(stat = "identity") +
+  geom_linerange(aes(ymin = estimate - 2*std.error, ymax = estimate + 2*std.error)) +
+  facet_grid(rows = vars(term), cols = vars(hpd_area), scales = "free") +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(colour = "grey50", size = 0.5),
+    #legend.position = "none",
+    strip.background = element_rect(
+     color="white", fill="white"
+     ),
+     text = element_text(family = "Corbel"),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9)
+    ) +
+  labs(
+    subtitle = "68.2% HPD"
+  )
+```
+Interaction model comes back with interesting results. Big challenge is the huge ucnertainty on the interaction term, also intercepts moved completely.
+
+For funsies lets check the intercepts (I won't be able to biteb into the results viz today anyway)
+
+```{r}
+offset_curve_sigma_comb_params %>%
+  filter(str_detect(term, "Interce")) %>%
+  select(is_pos, model, estimate) %>%
+  mutate(acc_zero = 1 / (1 + exp(- estimate)))
+```
+
+Now lets check for the interaction model
+```{r}
+offset_curve_sigma_comb_interact_params %>%
+  filter(str_detect(term, "Interce")) %>%
+  select(is_pos, model, estimate) %>%
+  mutate(acc_zero = 1 / (1 + exp(- estimate)))
+```
+OK, from a hard physical point of view, the interaction model gives us absurd results for the point case. 
+
+Next step - plot this, with relevant uncertainties. Take it from there. Will also need to prep visualizations, possibly not for the interaction case though :)

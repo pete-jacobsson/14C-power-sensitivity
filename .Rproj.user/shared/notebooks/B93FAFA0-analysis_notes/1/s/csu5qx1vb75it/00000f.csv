@@ -1,0 +1,6 @@
+"0","##Get the results out"
+"0",""
+"0","offset_curve_sigma_comb_interact_params <- readRDS(""single_cals_curve_uncert_regr.rds"") %>%"
+"0","  filter(str_detect(model, ""comb_inter"")) %>%"
+"0","  mutate(model_results = map(model_results, tidy)) %>%"
+"0","  unnest(cols = c(model_results))"
