@@ -2,5 +2,6 @@
 "0","single_cals_curve_uncert_regr <- single_cals_curve_uncert_regr %>%"
 "0","  select(-data) %>%"
 "0","  pivot_longer(!is_pos, names_to = ""model"", values_to = ""model_results"")"
-"0",""
-"0","saveRDS(single_cals_curve_uncert_regr, ""single_cals_curve_uncert_regr.rds"")"
+"2","Error in select(., -data) : 
+  object 'single_cals_curve_uncert_regr' not found
+"

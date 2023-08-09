@@ -1788,3 +1788,16 @@ offset_curve_sigma_comb_interact_params %>%
 OK, from a hard physical point of view, the interaction model gives us absurd results for the point case. 
 
 Next step - plot this, with relevant uncertainties. Take it from there. Will also need to prep visualizations, possibly not for the interaction case though :)
+```{r}
+offset_curve_sigma_comb_params %>%
+  filter(str_detect(term, "Interce")) %>%
+  select(is_pos, model, estimate, std.error) %>%
+  mutate(
+    acc_zero = 1 / (1 + exp(- estimate)),
+    acc_zero_min = 1 / (1 + exp(- (estimate - 2 * std.error))),
+    acc_zero_max = 1 / (1 + exp(- (estimate + 2 * std.error))),
+    )
+```
+
+
+The models catch the expected results. Next step will be visualization.

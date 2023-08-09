@@ -58,4 +58,14 @@
 "0","      map(data, offset_sigma_curve_comb_interact_acc95)"
 "0","    "
 "0","    )"
-"0",""
+"1","[1m[33mError[39m in `mutate()`:[22m
+[38;5;232m[36mℹ[38;5;232m In argument: `offset_curve_acc68 = map(data, offset_curve_acc68)`.
+[36mℹ[38;5;232m In group 1: `is_pos = FALSE`.[39m
+[1mCaused by error in `as_mapper()`:[22m
+[33m![39m object 'offset_curve_acc68' not found
+Backtrace:
+[90m  1. [39msingle_cals_curve_uncert_nest %>% ...
+[90m  9. [39m[1mpurrr[22m::map(data, offset_curve_acc68)
+[90m 10. [39mpurrr:::map_(""list"", .x, .f, ..., .progress = .progress)
+[90m 11. [39mpurrr::as_mapper(.f, ...)
+"
