@@ -1,0 +1,5 @@
+"0",""
+"0","predict_model_results_osc(offset_dir = ""neg"", hpd_area = ""95"", "
+"0","                          model_name = ""comb_acc"","
+"0","                          variable = ""sigma_curve_uncert"", "
+"0","                          variable_range = seq(10, 35))"

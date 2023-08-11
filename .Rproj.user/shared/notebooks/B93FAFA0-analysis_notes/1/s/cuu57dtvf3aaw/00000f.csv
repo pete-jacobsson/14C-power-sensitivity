@@ -1,0 +1,8 @@
+"0","offset_curve_sigma_comb_params %>%"
+"0","  filter(str_detect(term, ""Interce"")) %>%"
+"0","  select(is_pos, model, estimate, std.error) %>%"
+"0","  mutate("
+"0","    acc_zero = 1 / (1 + exp(- estimate)),"
+"0","    acc_zero_min = 1 / (1 + exp(- (estimate - 2 * std.error))),"
+"0","    acc_zero_max = 1 / (1 + exp(- (estimate + 2 * std.error))),"
+"0","    )"

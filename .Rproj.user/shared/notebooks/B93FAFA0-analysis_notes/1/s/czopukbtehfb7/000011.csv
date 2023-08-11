@@ -1,0 +1,5 @@
+"0","## Function tests"
+"0","predict_model_results_osc(offset_dir = ""pos"", hpd_area = ""68"","
+"0","                          model_name = ""comb_acc"","
+"0","                          variable = ""offset_magnitude"", "
+"0","                          variable_range = seq(0, 50))"
