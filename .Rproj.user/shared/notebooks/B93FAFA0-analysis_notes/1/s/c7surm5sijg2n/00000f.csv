@@ -1,0 +1,4 @@
+"0","stan_offset_sigma_curve_comb_acc95 <- function(singles_data) {"
+"0","  stan_glm(accuracy_95 ~ offset_magnitude + sigma_curve_uncert,"
+"0","           data = singles_data, family = binomial(link = 'logit'))"
+"0","}"
