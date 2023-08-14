@@ -1938,32 +1938,61 @@ So we've got ourselves a model that more or less fits. We can still see that the
 ##Read and nest the data
 single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv")
 
-##Nesting
-single_cals_curve_uncert_nest <- single_cals_w_curve_uncert %>%
-  mutate(is_pos = if_else(offset_magnitude >= 0, TRUE, FALSE)) %>%
-  select(curve_uncert, measurement_error, offset_magnitude, accuracy_68,
-         accuracy_95, is_pos) %>%
-  group_by(is_pos) %>%
-  nest()
+
 ```
 
 ```{r}
-stan_offset_sigma_curve_comb_acc95 <- function(singles_data) {
-  stan_glm(accuracy_95 ~ offset_magnitude + sigma_curve_uncert,
-           data = singles_data, family = binomial(link = 'logit'))
-}
+single_cals_curve_for_stan <- single_cals_w_curve_uncert %>%
+  pivot_longer(c(accuracy_68, accuracy_95),
+               names_to = "hpd_area", values_to = "accuracy") %>%
+  select(curve_uncert, measurement_error, offset_magnitude,
+         hpd_area, accuracy) %>%
+  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
 ```
 
 ```{r}
-###Test the STAN functions
-test_df <- single_cals_w_curve_uncert %>%
-  filter(offset_magnitude > 0)
+###Test the STAN functions - yes an ugly way to do it, but too few to justify setting up a nicer loop. 
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "68") & offset_magnitude > 0)
   
-test_result <- stan_glm(accuracy_95 ~ offset_magnitude + sigma_curve_uncert,
-                        data = test_df, family = binomial(link = 'logit'))
+stan_offset_curve_sigma_comb_68_pos <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "95") & offset_magnitude > 0)
+  
+stan_offset_curve_sigma_comb_95_pos <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "68") & offset_magnitude < 0)
+  
+stan_offset_curve_sigma_comb_68_neg <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "95") & offset_magnitude < 0)
+  
+stan_offset_curve_sigma_comb_95_neg <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
 
 
-summary(test_result)
+stan_offset_curve_sigma_comb <- list(
+  stan_offset_curve_sigma_comb_68_pos,
+  stan_offset_curve_sigma_comb_68_neg,
+  stan_offset_curve_sigma_comb_95_pos,
+  stan_offset_curve_sigma_comb_95_neg
+)
 
 ```
 
+```{r}
+##Lets not keep re-running the models if we don't need to :)
+write_rds(stan_offset_curve_sigma_comb, "stan_offset_curve_sigma_comb.rds")
+```
+
+## Part 14 review STAN models

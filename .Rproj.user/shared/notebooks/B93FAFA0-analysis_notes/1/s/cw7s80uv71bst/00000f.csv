@@ -1,0 +1,2 @@
+"0","##Lets not keep re-running the models if we don't need to :)"
+"0","write_rds(stan_offset_curve_sigma_comb, ""stan_offset_curve_sigma_comb.rds"")"
