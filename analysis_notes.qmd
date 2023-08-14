@@ -1996,3 +1996,20 @@ write_rds(stan_offset_curve_sigma_comb, "stan_offset_curve_sigma_comb.rds")
 ```
 
 ## Part 14 review STAN models
+```{r}
+summary(stan_offset_curve_sigma_comb[[1]]) ##68pos
+```
+```{r}
+summary(stan_offset_curve_sigma_comb[[2]]) ##68neg
+```
+
+```{r}
+summary(stan_offset_curve_sigma_comb[[3]]) ##95pos
+```
+
+```{r}
+summary(stan_offset_curve_sigma_comb[[4]]) ##95neg
+```
+
+
+
