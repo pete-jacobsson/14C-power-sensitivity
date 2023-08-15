@@ -1,2 +1,5 @@
 "0","##Lets not keep re-running the models if we don't need to :)"
 "0","write_rds(stan_offset_curve_sigma_comb, ""stan_offset_curve_sigma_comb.rds"")"
+"2","Error in saveRDS(x, con, version = version, refhook = refhook, ascii = text) : 
+  object 'stan_offset_curve_sigma_comb' not found
+"

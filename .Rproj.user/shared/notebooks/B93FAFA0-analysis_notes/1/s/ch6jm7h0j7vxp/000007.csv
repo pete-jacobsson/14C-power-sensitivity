@@ -1,0 +1,4 @@
+"0","color_scheme_set(""blue"")"
+"0",""
+"0","mcmc_hist(posterior_68_pos, pars = c(""(Intercept)"", ""offset_magnitude"", "
+"0","                                     ""sigma_curve_uncert""))"

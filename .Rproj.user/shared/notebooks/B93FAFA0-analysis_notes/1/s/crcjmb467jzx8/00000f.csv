@@ -1,0 +1,6 @@
+"0","stan_offset_curve_sigma_comb <- read_rds(""stan_offset_curve_sigma_comb.rds"")"
+"0",""
+"0","posterior_68_pos <- as.array(stan_offset_curve_sigma_comb[[1]])"
+"0","posterior_68_neg <- as.array(stan_offset_curve_sigma_comb[[2]])"
+"0","posterior_95_pos <- as.array(stan_offset_curve_sigma_comb[[3]])"
+"0","posterior_95_neg <- as.array(stan_offset_curve_sigma_comb[[4]])"

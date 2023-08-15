@@ -10,7 +10,7 @@ library(broom)
 library(jtools)
 library(rstan)
 library(rstanarm)
-
+library(bayesplot)
 ```
 
 
@@ -2011,5 +2011,26 @@ summary(stan_offset_curve_sigma_comb[[3]]) ##95pos
 summary(stan_offset_curve_sigma_comb[[4]]) ##95neg
 ```
 
+### Plot MCMC chain outputs
+```{r}
+stan_offset_curve_sigma_comb <- read_rds("stan_offset_curve_sigma_comb.rds")
 
+posterior_68_pos <- as.array(stan_offset_curve_sigma_comb[[1]])
+posterior_68_neg <- as.array(stan_offset_curve_sigma_comb[[2]])
+posterior_95_pos <- as.array(stan_offset_curve_sigma_comb[[3]])
+posterior_95_neg <- as.array(stan_offset_curve_sigma_comb[[4]])
+```
+
+```{r}
+color_scheme_set("blue")
+
+mcmc_hist(posterior_68_pos, pars = c("(Intercept)", "offset_magnitude", 
+                                     "sigma_curve_uncert"))
+mcmc_hist(posterior_68_neg, pars = c("(Intercept)", "offset_magnitude", 
+                                     "sigma_curve_uncert"))
+mcmc_hist(posterior_95_pos, pars = c("(Intercept)", "offset_magnitude", 
+                                     "sigma_curve_uncert"))
+mcmc_hist(posterior_95_neg, pars = c("(Intercept)", "offset_magnitude", 
+                                     "sigma_curve_uncert"))
+```
 
