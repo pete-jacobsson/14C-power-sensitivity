@@ -2034,3 +2034,8 @@ mcmc_hist(posterior_95_neg, pars = c("(Intercept)", "offset_magnitude",
                                      "sigma_curve_uncert"))
 ```
 
+### Plot MCMC chains
+
+
+
+### Write function to simulate predictions
