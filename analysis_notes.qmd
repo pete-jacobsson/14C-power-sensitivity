@@ -2034,7 +2034,30 @@ mcmc_hist(posterior_95_neg, pars = c("(Intercept)", "offset_magnitude",
                                      "sigma_curve_uncert"))
 ```
 
-### Plot MCMC chains
+### MCMC diagnostics
+Why go into MCMC diags after looking at model results? Well if model results were a mess, no need to do MCMC diags. If, on the other hand MCMC diags are OK, model results still can be a mess.
+```{r}
+mcmc_parcoord(posterior_68_neg)
+mcmc_parcoord(posterior_68_pos)
+mcmc_parcoord(posterior_95_neg)
+mcmc_parcoord(posterior_95_pos)
+```
+
+```{r}
+mcmc_pairs(posterior_68_pos)
+mcmc_pairs(posterior_68_neg)
+mcmc_pairs(posterior_95_pos)
+mcmc_pairs(posterior_95_neg)
+```
+OK, I don't like those correlations between sigma_curve_uncert and the intercept. Also the correlation between offset_magnitude and intercept for the 95% models is becoming concerning.
+
+```{r}
+mcmc_trace(posterior_68_pos)
+mcmc_trace(posterior_68_neg)
+mcmc_trace(posterior_95_pos)
+mcmc_trace(posterior_95_neg)
+```
+
 
 
 
