@@ -1,0 +1,5 @@
+"0","system(paste(""/home/pete/OxCal/bin/OxCalLinux"", 
+               singles_014_input_names[1]))
+"
+"2","Segmentation fault (core dumped)
+"

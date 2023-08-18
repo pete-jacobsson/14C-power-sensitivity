@@ -2127,4 +2127,56 @@ Which gices ever so slight differences to Oxcals 2708 - 2627 (23.8%) and 2622 - 
 
 This feels like "Return to the Temple of Doom" or something...
 
+```{r}
+### 10000 Single calibration simulated around the mean of the calibration curve
+cal_curve = read_csv("intcal_20_interpolated.csv")
+n_sims <- 10000 ### Choose how many sims you want. Start with 10000
+target_years <- sample(cal_curve$CalBP, n_sims, replace = T) ### Select some target years
+offset_magnitudes <- runif(n_sims, -50, 50) ### Sim offsets
+measurement_errors <- runif(n_sims, 8, 35) ### Sim accuracy
+offset_14c_ages <- c() ### Empty input folder
+  
+  ### Do the Simulated values vector
+for (i in 1:n_sims) {
+  offset_14c_ages <- c(offset_14c_ages, 
+                       rnorm(1, mean = subset(cal_curve, cal_curve$CalBP == 
+                                                target_years[i]
+                                              )$BP + offset_magnitudes[i], 
+                             measurement_errors[i]))
+  }
+  
+  singles_014_params <- data.frame(target_years,  offset_14c_ages, 
+                                  measurement_errors, offset_magnitudes)
+  write.csv(singles_014_params, "singles_014_params.csv")
+  
+  ### Get 4 input files to run from R
+  
+  commands <- c("Plot(){R_Date(", rep("R_Date(", n_sims - 1))
+  close_singles <- c(rep(");", n_sims - 1), "};};")
+  commas <- c(rep(",", n_sims))
+  
+  oxcal_input <- data.frame(commands, singles_014_params$offset_14c_ages, commas, 
+                            singles_014_params$measurement_errors, close_singles)
+  names(oxcal_input) <- NULL
+  rownames(oxcal_input) <- NULL
+  
+  singles_014_input_names <- c()
+  for (i in 1:5) {
+      singles_014_input_names <- c(singles_014_input_names,
+                                paste("/home/pete/Documents/oxcal_results/sensitivity_014_singles/sensitivity_014_singles", i, ".oxcal", sep = ""))
+  }
+  
+  
+  write.table(oxcal_input, file = singles_014_input_names[1], row.names = F, quote = F)
+
+  
+  
+system(paste("/home/pete/OxCal/bin/OxCalLinux", 
+               singles_014_input_names[1]))
+  
+for (i in 1:5) {
+  system(paste("C:/Users/Pete.C14/Progs/OxCal_4_4_1/OxCal/bin/OxCalWin.exe", 
+               Singles011InputNames[i]))
+  } 
+```
 
