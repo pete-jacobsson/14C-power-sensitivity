@@ -11,6 +11,7 @@ library(jtools)
 library(rstan)
 library(rstanarm)
 library(bayesplot)
+library(Bchron)
 ```
 
 
@@ -2113,4 +2114,17 @@ predict_singles_accuracy("neg", "68", -40, 10, 30)
 predict_singles_accuracy("pos", "95", 40, 10, 30)
 predict_singles_accuracy("neg", "95", -40, 10, 30)
 ```
+
+## Part 15 Testing the model.
+Model testing come in two flavours. First, I'll get more data and see if the parameters are still the same. After that I'll get some more data with specific values and run predictions, to see if they match expectations.
+
+Now, I do not feel like running everything through OxCal again, so in the first instance I'll try using the relevant R packages (after checking for comprability with the ugly thing that is!).
+
+```{r}
+calibrate(2450, 50)
+```
+Which gices ever so slight differences to Oxcals 2708 - 2627 (23.8%) and 2622 - 2358 (71.7%). OK, lets re-hash how the OxCal code worked...
+
+This feels like "Return to the Temple of Doom" or something...
+
 
