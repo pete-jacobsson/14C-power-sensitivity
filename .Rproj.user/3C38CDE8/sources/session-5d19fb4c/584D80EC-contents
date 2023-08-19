@@ -2203,17 +2203,32 @@ simulate_oxcal(target_date = 2450, offset_magnitude = 20, measurement_error = 20
 #### Component function1: execute_simulation
 
 ```{r}
-execute_simulation <- function (target_date, offset_magnitude, 
-                                measurement_error){
-  ## The function takes on a target date, an offset magnitude and a measurement error
-  ## The function combines the inputs into a radiocarbon age and passes those to OxCal
-  if (!exists(intcal20_interpolated)) {
-    intcal20_interpolated <- 
+get_uncal <- function (target_date, offset_magnitude, 
+                       curve = "intcal20_interpolated.csv"){
+  ## The function takes on a target date, an offset magnitude and a calibration curve
+  ## The function returns a 14C age for the given target date, offset by a given value
+  library(readr)
+  
+  if (!exists("intcal20_interpolated")) {
+    intcal20_interpolated <- read_csv("intcal_20_interpolated.csv")
   }
   
+  age_uncal <- intcal20_interpolated |>
+    filter(CalBP == target_date) |>
+    select(BP) |>
+    pull()
   
+  age_uncal <- age_uncal + offset_magnitude
+  
+  age_uncal
 }
 ```
 
 
+```{r}
+get_uncal(500, 20)
+```
+```{r}
+exists("intcal20_interpolated")
+```
 
