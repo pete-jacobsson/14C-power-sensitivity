@@ -1,0 +1,1 @@
+{"frames":[{"func":"simulate_oxcal(target_date = 2450, offset_magnitude = 20, measurement_error = 20)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0}],"message":"Error in execute_simulation(target_date, offset_magnitue, measurement_error) : \n  could not find function \"execute_simulation\"\n"}

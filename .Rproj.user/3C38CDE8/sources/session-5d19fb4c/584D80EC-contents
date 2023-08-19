@@ -2180,3 +2180,40 @@ for (i in 1:5) {
   } 
 ```
 
+### OxCal function re-build
+Having done the few experiments above, I now have a clearer picture of how to approach this beast. The old singles OxCal relied on copying batches of 2k results from OxCal into Excel. I don't want to do it this way anymore, so instead I'll try something different. I will try setting up a function to generate a single OxCal result, collect the results and then delete the excess files.
+
+#### New Simulate OxCal and test
+```{r}
+simulate_oxcal <- function (target_date, offset_magnitude, measurement_error){
+  ## The function takes on a target date, an offset magnitude and a measurement error
+  ## Returns a simulated OxCal result and ensures simulation folder is clean after running
+  execute_simulation(target_date, offset_magnitue, measurement_error)
+  simulation_result <- parse_single()
+  clean_simulation_folder()
+  simulation_result
+}
+```
+
+```{r}
+simulate_oxcal(target_date = 2450, offset_magnitude = 20, measurement_error = 20)
+```
+
+
+#### Component function1: execute_simulation
+
+```{r}
+execute_simulation <- function (target_date, offset_magnitude, 
+                                measurement_error){
+  ## The function takes on a target date, an offset magnitude and a measurement error
+  ## The function combines the inputs into a radiocarbon age and passes those to OxCal
+  if (!exists(intcal20_interpolated)) {
+    intcal20_interpolated <- 
+  }
+  
+  
+}
+```
+
+
+
