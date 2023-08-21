@@ -1,0 +1,8 @@
+"0","### The first two items are a later addition if further models need added"
+"0",""
+"0","### Now load up the model data again, nest it and build the model functions"
+"0","single_cals_w_curve_uncert <- read_csv(""single_cals_w_curve_uncert.csv"") %>%"
+"0","  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))"
+"2","Error in read_csv(""single_cals_w_curve_uncert.csv"") %>% mutate(sigma_curve_uncert = sqrt((measurement_error^2) +  : 
+  could not find function ""%>%""
+"

@@ -1879,6 +1879,58 @@ plot_model_predictions_ocs <- function(offset_dir, hpd_area, model_name, variabl
 }
 ```
 
+**After some reflection, visualizing the interaction model!!!**
+
+```{r}
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           model_name = "comb_inter",
+                           variable = "offset_magnitude",
+                           range = c(0, 50), rounding = 2.5,
+                           xlab = "Offset magnitude")
+
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_68",
+                           model_name = "comb_inter",
+                           variable = "offset_magnitude",
+                           range = c(-50, 0), rounding = 2.5,
+                           xlab = "Offset magnitude")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           model_name = "comb_inter",
+                           variable = "offset_magnitude",
+                           range = c(0, 50), rounding = 2.5,
+                           xlab = "Offset magnitude")
+
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
+                           model_name = "comb_inter",
+                           variable = "offset_magnitude",
+                           range = c(-50, 0), rounding = 2.5,
+                           xlab = "Offset magnitude")
+  
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
+                           variable = "sigma_curve_uncert",
+                           model_name = "comb_inter",
+                           range = c(10, 40), rounding = 2,
+                           xlab = "Measurement and curve error")
+
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_68",
+                           variable = "sigma_curve_uncert",
+                           model_name = "comb_inter",
+                           range = c(10, 40), rounding = 2,
+                           xlab = "Measurement and curve error")
+
+plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_95",
+                           variable = "sigma_curve_uncert",
+                           model_name = "comb_inter",
+                           range = c(10, 40), rounding = 2,
+                           xlab = "Measurement and curve error")
+
+plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
+                           variable = "sigma_curve_uncert",
+                           model_name = "comb_inter",
+                           range = c(10, 40), rounding = 2,
+                           xlab = "Measurement and curve error")
+```
+OK, these lines are far straighter than what we had without interactions. Not running that model!
 
 ```{r}
 plot_model_predictions_ocs(offset_dir = "pos", hpd_area = "accuracy_68",
@@ -1930,6 +1982,10 @@ plot_model_predictions_ocs(offset_dir = "neg", hpd_area = "accuracy_95",
                            xlab = "Measurement and curve error")
 ```
 Fit less than perfect but improvement on what we had before. The next step will be to convert the classical models into Bayesian models built with Stan and thus get closer to getting the probability distributions we need. Having said that, before I move any further on this, there are a few changes that will happen. Since this got started I had to re-install OxCal (much to my misery) and thus I should, at least in principle, be able to put together large numbers of calibrated dates again. Thus, once we get to model testing, the plan will be to simulate another 20k saples for two test models (checking parameter stability) and another 20-30 k in groups of 1000 simulations of the same scenario to test model predictions. As such, the original split data set can go back into the analysis and the analysis can be re-done.
+
+
+
+
 
 ## Part 13 Modelling with STAN
 So we've got ourselves a model that more or less fits. We can still see that the fit is not perfect on the measurement and curve side, but we do have an improvement over what has been before. Now comes the main part - moving from this model specification to predicting accuracy based on offset magnitude and curve-measurement uncertainty. For prediction, I will shift into Bayesian and use STAN. 
@@ -2114,6 +2170,14 @@ predict_singles_accuracy("neg", "68", -40, 10, 30)
 predict_singles_accuracy("pos", "95", 40, 10, 30)
 predict_singles_accuracy("neg", "95", -40, 10, 30)
 ```
+
+### Plot predictions against input data
+
+
+
+
+
+
 
 ## Part 15 Testing the model.
 Model testing come in two flavours. First, I'll get more data and see if the parameters are still the same. After that I'll get some more data with specific values and run predictions, to see if they match expectations.
