@@ -2188,8 +2188,19 @@ prep_predict_df <- function (param, curves_to_plot, offset_dir, hpd_area,
     const_param <- 25 ## Median offset_magnitude
   }
   
-  list(varia_param, const_param)
   ##While a vectorized solution is possible, here loopy code will be way easier.
+  ##Medians first
+  median_predictions <- c()
+  if (str_detect(param, "offset")) {
+    for (i in 1:50) {
+      prediction <- predict_singles_accuracy(offset_dir, hpd_area, 
+                                             offset_magnitude, sigma, 
+                                             curve_uncert) |>
+        median()
+      median_predictions <- c(median_predictions, prediction)
+    }
+    
+  }
   
   
 }
