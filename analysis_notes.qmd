@@ -1113,6 +1113,8 @@ single_cals_curve_uncert_diag <- single_cals_curve_uncert_regr %>%
   mutate(model_diags = map(model_results, glance)) %>%
   select(-model_results) %>%
   unnest(cols = c(model_diags))
+
+write_csv(single_cals_curve_uncert_diag, "single_cals_curve_uncert_diag.csv")
 ```
 
 ```{r}
