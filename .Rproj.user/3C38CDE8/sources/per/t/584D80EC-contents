@@ -1290,7 +1290,7 @@ OK, the estimates are screwed.
 
 ## Part 9 Try again, simpler model
 
-The screwy estimates imply that the best-fitting, most complex model, even though satisfactory in terms of AIC/BIC, might not be best suited to research design simulation. Hence the need to settle for something simpler. Lets go back and cut out some of the interaction terms. While we will still need the term running between the measurement error and offset magnitude (so that the simulation model is consistent with the hard reality), everything else was adding nice nuance, but may not have been strictly necessary. This will require first building the relevant model and then checki
+The screwy estimates imply that the best-fitting, most complex model, even though satisfactory in terms of AIC/BIC, might not be best suited to research design simulation. Hence the need to settle for something simpler. Lets go back and cut out some of the interaction terms. While we will still need the term running between the measurement error and offset magnitude (so that the simulation model is consistent with the hard reality), everything else was adding nice nuance, but may not have been strictly necessary. This will require first building the relevant model and then check
 
 ```{r}
 ##Get the results out
@@ -1416,7 +1416,6 @@ plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
       y = "Ratio accurate",
       x = xlab
     )
-  
   
 }
 ```
@@ -2176,40 +2175,18 @@ predict_singles_accuracy("neg", "95", -40, 10, 30)
 ### Plot predictions against input data
 Here I have the functions to plot predictions against simulation inputs. We want to plot the median and twenty plausible lines
 ```{r}
-prep_predict_df <- function (param, curves_to_plot, offset_dir, hpd_area, 
-                             offset_magnitude, sigma, curve_uncert){
-  ###Takes on information on param of interest, number of plausible curves to plot as well as predict_singles_accuracy inputs.
-  ###Returns a table with results for desired number of plausible curves, as well as the median curve
+draw_predict <- function (stan_model, other_param, value_range, mode = "median"){
+  ###This function draws a single prediction from the STAN results
+  ###It takes on the link to the STAN model, the value of the other parameter and a rangle of values for which to generate predictions.
+  ###It also takes on an indication if it is to use the median outcome, or a results from a random chain
+  ###It returns a two column DF with input values and 
   
-  ## First, lets set up the varias
-  if (str_detect(param, "offset")) {
-    varia_param <- seq(0, 50, 1)
-    const_param <- 28 ## Median value of sigma_curve combined
-  } else {### call me lazy
-    varia_param <- seq(12, 47, 1)
-    const_param <- 25 ## Median offset_magnitude
-  }
-  
-  ##While a vectorized solution is possible, here loopy code will be way easier.
-  ##Medians first
-  median_predictions <- c()
-  if (str_detect(param, "offset")) {
-    for (i in 1:50) {
-      prediction <- predict_singles_accuracy(offset_dir, hpd_area, 
-                                             offset_magnitude, sigma, 
-                                             curve_uncert) |>
-        median()
-      median_predictions <- c(median_predictions, prediction)
-    }
-    
-  }
-  
-  
+  return(stan_model)
 }
 ```
 
 ```{r}
-prep_predict_df("zonk")
+draw_predict(posterior_68_pos)
 
 ```
 
