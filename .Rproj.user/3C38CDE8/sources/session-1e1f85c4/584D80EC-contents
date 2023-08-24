@@ -2202,6 +2202,7 @@ draw_predict_random <- function (model, param_plotted,
   
   pred_results <- 1 / (1 + exp(-exp_term))
    
+  pred_results <- data.frame(value_range, pred_results)
   pred_results
   
 }
@@ -2242,6 +2243,7 @@ draw_predict_median <- function (model, param_plotted,
   
   pred_results <- 1 / (1 + exp(-exp_term))
    
+  pred_results <-  data.frame(value_range, pred_results)
   pred_results
   
 }
@@ -2253,13 +2255,20 @@ draw_predict_median(posterior_68_pos, "offset", seq(0, 50, 1), 25)
 draw_predict_median(posterior_68_pos, "", seq(0, 50, 1), 25)
 
 ```
+Looks good again!
+
+
+```{r}
+
+```
+
 
 
 
 ## Part 15 Testing the model.
 Model testing come in two flavours. First, I'll get more data and see if the parameters are still the same. After that I'll get some more data with specific values and run predictions, to see if they match expectations.
 
-Now, I do not feel like running everything through OxCal again, so in the first instance I'll try using the relevant R packages (after checking for comprability with the ugly thing that is!).
+Now, I do not feel like running everything through OxCal again, so in the first instance I'll try using the relevant R packages (after checking for comparability with the ugly thing that is!).
 
 ```{r}
 calibrate(2450, 50)

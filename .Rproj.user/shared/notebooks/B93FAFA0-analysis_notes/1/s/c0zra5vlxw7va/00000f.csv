@@ -25,6 +25,7 @@
 "0","  "
 "0","  pred_results <- 1 / (1 + exp(-exp_term))"
 "0","   "
+"0","  pred_results <- data.frame(value_range, pred_results)"
 "0","  pred_results"
 "0","  "
 "0","}"
