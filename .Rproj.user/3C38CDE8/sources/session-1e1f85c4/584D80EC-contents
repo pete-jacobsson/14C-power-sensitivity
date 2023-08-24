@@ -2216,7 +2216,43 @@ draw_predict_random(posterior_68_pos, "", seq(0, 50, 1), 25)
 Looks good, now for the function to plot the medians.
 
 
+```{r}
+draw_predict_median <- function (model, param_plotted, 
+                                 value_range, other_param){
+  ###This function draws a single prediction from the STAN results
+  ###It takes on the link to the STAN model, the value of the other parameter and a rangle of values for which to generate predictions.
+  ###It returns a two column DF with input values and 
+  
+  intercept <- model[1:1000, 1:4, 1] |> 
+    median()
+  offset_effect <- model[1:1000, 1:4, 2] |> 
+    median()
+  uncert_effect <- model[1:1000, 1:4, 3] |> 
+    median()
+  
+  if (str_detect(param_plotted, "offset")) {
+    exp_term <- intercept + 
+      value_range * offset_effect + 
+      other_param * uncert_effect
+  } else {
+    exp_term <- intercept + 
+      value_range * uncert_effect + 
+      other_param * offset_effect
+  }
+  
+  pred_results <- 1 / (1 + exp(-exp_term))
+   
+  pred_results
+  
+}
+```
 
+```{r}
+draw_predict_median(posterior_68_pos, "offset", seq(0, 50, 1), 25)
+
+draw_predict_median(posterior_68_pos, "", seq(0, 50, 1), 25)
+
+```
 
 
 
