@@ -2259,6 +2259,32 @@ Looks good again!
 
 
 ```{r}
+### Now plot over simulations
+
+single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv") |>
+  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
+
+p <- plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
+                                 variable = "offset_magnitude", rounding = 2,
+                                 xlab = "Offset magnitude")
+
+for (i in 1:50) {
+  sigma_curve_uncert <- sample(single_cals_w_curve_uncert$sigma_curve_uncert, 1)
+  
+  sample_predict <- draw_predict_random(posterior_68_pos, "offset", 
+                                        seq(0, 50, 1), sigma_curve_uncert) |>
+    rename(variable_to_plot = 1, ratio_accurate = 2)
+  
+  p <- p + geom_line(data = sample_predict, linewidth = 0.1, linetype = 1)
+}
+
+median_predicts <- draw_predict_median(posterior_68_pos, "offset", 
+                                       seq(0, 50, 1), 25) |>
+  rename(variable_to_plot = 1, ratio_accurate = 2)
+
+p + geom_line(data = median_predicts)
+
+
 
 ```
 
