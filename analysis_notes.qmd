@@ -2261,6 +2261,20 @@ Looks good again!
 ```{r}
 ### Now plot over simulations
 
+plot_stan_over_sims <- function (model, range_to_plot, variable, rounding,
+                                 xlab = ""){
+  
+  single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv") |>
+    mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
+
+  p <- plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
+                                   variable = "offset_magnitude", rounding = 2,
+                                   xlab = "Offset magnitude")
+  
+  
+  
+}
+
 single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv") |>
   mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
 
