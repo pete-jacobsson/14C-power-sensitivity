@@ -11,8 +11,23 @@ library(jtools)
 library(rstan)
 library(rstanarm)
 library(bayesplot)
-library(Bchron)
 ```
+
+
+```{r, include=FALSE}
+##List of all data to be loaded to run downstream project elements.
+list_of_sims <- read_csv("sims_list.csv")
+single_cals <- read_csv("simulation_results/singles_011_results.csv")
+single_cals_log_diagnostics <- read_csv("model_results/single_cals_log_diagnostics.csv")
+cal_curve <- read_csv("intcal_20_interpolated.csv")
+single_cals_log_results <- read_csv("model_results/single_cals_log_results.csv")
+single_cals_log_results_bin10 <- read_csv(
+  "model_results/single_cals_log_results_bin10.csv")
+single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv")
+single_cals_curve_uncert_regr <- readRDS("single_cals_curve_uncert_regr.rds")
+stan_offset_curve_sigma_comb <- read_rds("stan_offset_curve_sigma_comb.rds")
+```
+
 
 
 This document contains the research notes from the analysis of the simulations conducted using R and OxCal. This is a rough notebook that begins at the point when the project was re-initiated in June 2023 until completion
