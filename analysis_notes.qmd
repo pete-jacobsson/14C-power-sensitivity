@@ -12,7 +12,6 @@ library(rstan)
 library(rstanarm)
 library(bayesplot)
 library(modules)
-ssm <- read_rds("singles_sensitivity_module.R")
 ```
 
 
@@ -30,12 +29,7 @@ single_cals_curve_uncert_regr <- readRDS("single_cals_curve_uncert_regr.rds")
 stan_offset_curve_sigma_comb <- read_rds("stan_offset_curve_sigma_comb.rds")
 ```
 
-```{r}
-## Clear/prime module
-singles_sensitivity_m <- module()
 
-saveRDS(singles_sensitivity_m, "singles_sensitivity_module.R")
-```
 
 
 
@@ -1406,6 +1400,7 @@ predict_model_results_osc(offset_dir = "pos", hpd_area = "95",
 
 
 ```{r}
+
 plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
                                         rounding, xlab) {
   ##This function plots the simulation results for the purposes of the results graphing
@@ -1442,6 +1437,7 @@ plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
     )
   
 }
+
 ```
 
 

@@ -1,0 +1,25 @@
+library(modules)
+
+m <- module({
+  foo <- function() "foo"
+  
+})
+
+m <- extend(m, {
+  bar <- function() "bar"
+})
+
+m$foo()
+m$bar()
+
+fizz <- function() "fizz"
+
+fizz()
+
+m <- extend(m, {
+  Sys.getenv()
+  fizz <- fizz()
+  })
+
+saveRDS(m, "test_module.R")
+m <- readRDS("test_module.R")
