@@ -12,6 +12,7 @@ library(rstan)
 library(rstanarm)
 library(bayesplot)
 library(modules)
+library(pssp)
 ```
 
 

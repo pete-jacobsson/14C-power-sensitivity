@@ -1,9 +1,0 @@
-"0","plot_model_predictions_ocs(offset_dir = ""pos"", hpd_area = ""accuracy_68"",
-                           model_name = ""act_oc_sc_acc"",
-                           variable = ""offset_magnitude"",
-                           range = c(0, 50), rounding = 2.5,
-                           xlab = ""Offset magnitude"")
-"
-"2","Error in read_csv(""single_cals_w_curve_uncert.csv"") %>% mutate(sigma_curve_uncert = sqrt((measurement_error^2) +  : 
-  could not find function ""%>%""
-"
