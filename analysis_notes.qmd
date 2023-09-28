@@ -28,6 +28,13 @@ single_cals_log_results_bin10 <- read_csv(
 single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv")
 single_cals_curve_uncert_regr <- readRDS("single_cals_curve_uncert_regr.rds")
 stan_offset_curve_sigma_comb <- read_rds("stan_offset_curve_sigma_comb.rds")
+
+stan_offset_curve_sigma_comb <- read_rds("stan_offset_curve_sigma_comb.rds")
+
+posterior_68_pos <- as.array(stan_offset_curve_sigma_comb[[1]])
+posterior_68_neg <- as.array(stan_offset_curve_sigma_comb[[2]])
+posterior_95_pos <- as.array(stan_offset_curve_sigma_comb[[3]])
+posterior_95_neg <- as.array(stan_offset_curve_sigma_comb[[4]])
 ```
 
 
@@ -2187,14 +2194,40 @@ predict_singles_accuracy <- function (offset_dir, hpd_area, offset_magnitude,
 ```
 
 ```{r}
-predict_singles_accuracy("pos", "68", 40, 10, 30)
-predict_singles_accuracy("neg", "68", -40, 10, 30)
-predict_singles_accuracy("pos", "95", 40, 10, 30)
-predict_singles_accuracy("neg", "95", -40, 10, 30)
+predict_singles_accuracy("pos", "68", 40, 10, 30)[1:10]
+predict_singles_accuracy("neg", "68", -40, 10, 30)[1:10]
+predict_singles_accuracy("pos", "95", 40, 10, 30)[1:10]
+predict_singles_accuracy("neg", "95", -40, 10, 30)[1:10]
 ```
 
 ### Plot predictions against input data
 Here I have the functions to plot predictions against simulation inputs. We want to plot the median and twenty plausible lines
+
+
+```{r}
+draw_other_param <- function (other_var){
+  ## Get the secondary variables for the plotting functions
+  
+  if (str_detect(other_var, "offset")) {
+    secondary_var <- sample(single_cals_w_curve_uncert$offset_magnitude, 
+                               1)} else {
+    secondary_var <- sample(single_cals_w_curve_uncert$sigma_curve_uncert,
+                               1)                               
+                               }
+  secondary_var
+}
+```
+
+
+```{r}
+draw_other_param("offset")
+draw_other_param("uncert")
+draw_other_param("chupacabra")
+```
+
+
+
+
 ```{r}
 draw_predict_random <- function (model, param_plotted, 
                                  value_range, other_param){
@@ -2292,9 +2325,24 @@ plot_stan_over_sims <- function (model, range_to_plot, variable, rounding,
                                    variable = "offset_magnitude", rounding = 2,
                                    xlab = "Offset magnitude")
   
+  return(p)
   
+  for (i in 1:50) {
+    other_param <- draw_other_param("uncert")
   
+    sample_predict <- draw_predict_random(model, variable, 
+                                          seq(0, 50, 1), other_param) |>
+      rename(variable_to_plot = 1, ratio_accurate = 2)
+  
+    p <- p + geom_line(data = sample_predict, linewidth = 0.1, linetype = 1)
+  }
+  
+  p
 }
+
+plot_stan_over_sims(posterior_68_pos)
+
+
 
 single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv") |>
   mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
