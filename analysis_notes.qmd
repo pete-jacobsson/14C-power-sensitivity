@@ -1410,24 +1410,34 @@ predict_model_results_osc(offset_dir = "pos", hpd_area = "95",
 ```{r}
 
 plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
-                                        rounding, xlab) {
+                                        rounding, xlab, offset_dir) {
   ##This function plots the simulation results for the purposes of the results graphing
   
-  single_cals_curve_uncert_mod <- read_csv("single_cals_w_curve_uncert.csv") %>%
-  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
+  single_cals_curve_uncert_mod <- read_csv("single_cals_w_curve_uncert.csv") |>
+    mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
   
-  single_cals_curve_uncert_mod %>%
-    rename(variable_to_plot = variable, hpd_to_plot = hpd_area) %>%
+  if (str_detect(offset_dir, "pos")) {
+    single_cals_curve_uncert_mod <- filter(single_cals_curve_uncert_mod,
+                                           offset_magnitude >= 0)
+  } else {
+    single_cals_curve_uncert_mod <- filter(single_cals_curve_uncert_mod,
+                                           offset_magnitude < 0)
+  }
+  
+  
+  # return(single_cals_curve_uncert_mod)
+  single_cals_curve_uncert_mod |>
+    rename(variable_to_plot = variable, hpd_to_plot = hpd_area) |>
     filter(variable_to_plot >= range_to_plot[1] & 
-             variable_to_plot <= range_to_plot) %>%
+             variable_to_plot <= range_to_plot) |>
     mutate(
       variable_to_plot = plyr::round_any(variable_to_plot, rounding)
-    ) %>%
-    select(variable_to_plot, hpd_to_plot) %>%
-    group_by(variable_to_plot) %>%
+    ) |>
+    select(variable_to_plot, hpd_to_plot) |>
+    group_by(variable_to_plot) |>
     summarize(
       ratio_accurate = mean(hpd_to_plot)
-    ) %>%
+    ) |>
     ggplot(aes(x = variable_to_plot, y = ratio_accurate)) +
     geom_bar(stat = 'identity', fill = "steelblue") +
     theme_bw() +
@@ -1452,13 +1462,20 @@ plot_simulation_results_osc <- function(range_to_plot, hpd_area, variable,
 ```{r}
 plot_simulation_results_osc(range_to_plot = c(10, 15), hpd_area = "accuracy_68",
                             variable = "curve_uncert", rounding = 5,
-                            xlab = "Calibration curve uncertainty")
-plot_simulation_results_osc(range_to_plot = c(24, 50), hpd_area = "accuracy_95",
-                            variable = "measurement_error", rounding = 2.5,
-                            xlab = "Measurement uncertainty")
+                            xlab = "Calibration curve uncertainty",
+                            offset_dir = "pos")
+plot_simulation_results_osc(range_to_plot = c(10, 50), hpd_area = "accuracy_95",
+                            variable = "measurement_error", rounding = 1,
+                            xlab = "Measurement uncertainty",
+                            offset_dir = "pos")
+plot_simulation_results_osc(range_to_plot = c(10, 50), hpd_area = "accuracy_95",
+                            variable = "measurement_error", rounding = 1,
+                            xlab = "Measurement uncertainty",
+                            offset_dir = "neg")
 plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
                             variable = "offset_magnitude", rounding = 2,
-                            xlab = "Offset magnitude")
+                            xlab = "Offset magnitude",
+                            offset_dir = "pos")
 
 
 
@@ -2208,7 +2225,7 @@ Here I have the functions to plot predictions against simulation inputs. We want
 draw_other_param <- function (other_var){
   ## Get the secondary variables for the plotting functions
   
-  if (str_detect(other_var, "offset")) {
+  if (!str_detect(other_var, "offset")) {  ##Invert here to work easy with the plotting function
     secondary_var <- sample(single_cals_w_curve_uncert$offset_magnitude, 
                                1)} else {
     secondary_var <- sample(single_cals_w_curve_uncert$sigma_curve_uncert,
@@ -2315,61 +2332,182 @@ Looks good again!
 ```{r}
 ### Now plot over simulations
 
-plot_stan_over_sims <- function (model, range_to_plot, variable, rounding,
-                                 xlab = ""){
-  
-  single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv") |>
-    mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
+plot_stan_over_sims <- function (model, range_to_plot, hpd_area, variable, rounding, 
+                                 xlab = "", n_draws, median_other, offset_dir){
 
-  p <- plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
-                                   variable = "offset_magnitude", rounding = 2,
-                                   xlab = "Offset magnitude")
+  p <- plot_simulation_results_osc(range_to_plot = range_to_plot, 
+                                   hpd_area = hpd_area,
+                                   variable = variable, 
+                                   rounding = rounding,
+                                   xlab = xlab,
+                                   offset_dir = offset_dir)
   
-  return(p)
   
-  for (i in 1:50) {
-    other_param <- draw_other_param("uncert")
+  for (i in 1:n_draws) {
+    other_param <- draw_other_param(variable)
   
-    sample_predict <- draw_predict_random(model, variable, 
-                                          seq(0, 50, 1), other_param) |>
-      rename(variable_to_plot = 1, ratio_accurate = 2)
-  
+    sample_predict <- draw_predict_random(model = model,
+                                          param_plotted = variable,
+                                          value_range = seq(range_to_plot[1],
+                                                            range_to_plot[2],
+                                                            0.5),
+                                          other_param = other_param) |>
+    rename(variable_to_plot = 1, ratio_accurate = 2)
+
     p <- p + geom_line(data = sample_predict, linewidth = 0.1, linetype = 1)
   }
   
+  median_predicts <- draw_predict_median(model = model, 
+                                         param_plotted = variable, 
+                                         value_range = seq(range_to_plot[1],
+                                                            range_to_plot[2],
+                                                            0.5), 
+                                         other_param = median_other) |>
+  rename(variable_to_plot = 1, ratio_accurate = 2)
+
+  p <- p +  geom_line(data = median_predicts)
   p
 }
 
-plot_stan_over_sims(posterior_68_pos)
+```
+
+```{r}
+plot_stan_over_sims(posterior_68_pos, 
+                    range_to_plot = c(0, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 5,
+                    median_other = 25,
+                    offset_dir = "pos")
+
+plot_stan_over_sims(posterior_68_neg, 
+                    range_to_plot = c(-50, 0), 
+                    hpd_area = "accuracy_68", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 5,
+                    median_other = 25,
+                    offset_dir = "neg")
 
 
-
-single_cals_w_curve_uncert <- read_csv("single_cals_w_curve_uncert.csv") |>
-  mutate(sigma_curve_uncert = sqrt((measurement_error^2) + (curve_uncert^2)))
-
-p <- plot_simulation_results_osc(range_to_plot = c(0, 50), hpd_area = "accuracy_68",
-                                 variable = "offset_magnitude", rounding = 2,
-                                 xlab = "Offset magnitude")
-
-for (i in 1:50) {
-  sigma_curve_uncert <- sample(single_cals_w_curve_uncert$sigma_curve_uncert, 1)
-  
-  sample_predict <- draw_predict_random(posterior_68_pos, "offset", 
-                                        seq(0, 50, 1), sigma_curve_uncert) |>
-    rename(variable_to_plot = 1, ratio_accurate = 2)
-  
-  p <- p + geom_line(data = sample_predict, linewidth = 0.1, linetype = 1)
-}
-
-median_predicts <- draw_predict_median(posterior_68_pos, "offset", 
-                                       seq(0, 50, 1), 25) |>
-  rename(variable_to_plot = 1, ratio_accurate = 2)
-
-p + geom_line(data = median_predicts)
-
-
+plot_stan_over_sims(posterior_95_neg, 
+                    range_to_plot = c(10, 30), 
+                    hpd_area = "accuracy_95", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
 
 ```
+Over a month later, do the actual plotting
+
+```{r}
+plot_stan_over_sims(posterior_68_pos, 
+                    range_to_plot = c(0, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+
+
+plot_stan_over_sims(posterior_68_pos, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+```
+
+
+```{r}
+plot_stan_over_sims(posterior_68_neg, 
+                    range_to_plot = c(-50, 0), 
+                    hpd_area = "accuracy_68", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+
+
+plot_stan_over_sims(posterior_68_neg, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+```
+
+
+```{r}
+plot_stan_over_sims(posterior_95_pos, 
+                    range_to_plot = c(0, 50), 
+                    hpd_area = "accuracy_95", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+
+
+plot_stan_over_sims(posterior_95_pos, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_95", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+```
+
+
+```{r}
+plot_stan_over_sims(posterior_95_neg, 
+                    range_to_plot = c(-50, 0), 
+                    hpd_area = "accuracy_95", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+
+
+plot_stan_over_sims(posterior_95_neg, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_95", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+```
+
+Moral of the story:
+Good control over impacts of offset magnitude, but too few sims to make predictions on error/curve uncert worth it. Also, error/curve uncert predicts are very sensitive to input offset magnitudes.
+
+Moving forward this does make the case for taking a break and re-thinking the approach. Once we get into WMDs and Seqs the volumes of simulations will remain lower than what we can generate for single calibrations. This gives me pause, as I cannot be sure that I will be able to get a good control over the design features. In any case, this is enough to donwgrade project priority. Which means that all that's left at the moment is to tie this off and say why cutting losses. Moving forward, will want to change to a more fundamental approach.
+
+We know we neeed those controls, because, working over the entire range of variability, the probabilities distributed at the intersects with nominal accuracy are very spread - "we lose nominal accuracy between 10 and 40 years offset" is not good enough. 
+
 
 
 
