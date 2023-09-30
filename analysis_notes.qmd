@@ -2612,15 +2612,128 @@ mcmc_hist(posterior_95_neg_interact, pars = c("(Intercept)",
 ```
 
 
+```{r}
+mcmc_parcoord(posterior_68_neg_interact)
+mcmc_parcoord(posterior_68_pos_interact)
+mcmc_parcoord(posterior_95_neg_interact)
+mcmc_parcoord(posterior_95_pos_interact)
+```
+
+```{r}
+mcmc_pairs(posterior_68_pos_interact)
+mcmc_pairs(posterior_68_neg_interact)
+mcmc_pairs(posterior_95_pos_interact)
+mcmc_pairs(posterior_95_neg_interact)
+```
+Plenty strong correls. Should be wary xP
+
+```{r}
+mcmc_trace(posterior_68_pos_interact)
+mcmc_trace(posterior_68_neg_interact)
+mcmc_trace(posterior_95_pos_interact)
+mcmc_trace(posterior_95_neg_interact)
+```
+Good mixes.
 
 
 
 
+```{r}
+plot_stan_over_sims(posterior_68_pos_interact, 
+                    range_to_plot = c(0, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
 
 
+plot_stan_over_sims(posterior_68_pos_interact, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+```
 
 
+```{r}
+plot_stan_over_sims(posterior_68_neg_interact, 
+                    range_to_plot = c(-50, 0), 
+                    hpd_area = "accuracy_68", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
 
+
+plot_stan_over_sims(posterior_68_neg_interact, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_68", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+```
+
+
+```{r}
+plot_stan_over_sims(posterior_95_pos_interact, 
+                    range_to_plot = c(0, 50), 
+                    hpd_area = "accuracy_95", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+
+
+plot_stan_over_sims(posterior_95_pos_interact, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_95", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "pos")
+```
+
+
+```{r}
+plot_stan_over_sims(posterior_95_neg_interact, 
+                    range_to_plot = c(-50, 0), 
+                    hpd_area = "accuracy_95", 
+                    variable = "offset_magnitude", 
+                    rounding = 2, 
+                    xlab = "Offset magnitude",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+
+
+plot_stan_over_sims(posterior_95_neg_interact, 
+                    range_to_plot = c(10, 50), 
+                    hpd_area = "accuracy_95", 
+                    variable = "sigma_curve_uncert", 
+                    rounding = 1, 
+                    xlab = "Error and curve uncertainty",
+                    n_draws = 50,
+                    median_other = 25,
+                    offset_dir = "neg")
+```
+
+OK, absolute mess. No solutions here!
 
 
 
