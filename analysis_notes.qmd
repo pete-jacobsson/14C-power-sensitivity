@@ -2511,6 +2511,127 @@ We know we neeed those controls, because, working over the entire range of varia
 
 
 
+### One more pass
+
+OK, out of curiosity, what happens when we allow the interaction in? Will it change the look at the error estimate?
+
+```{r}
+###Test the STAN functions - yes an ugly way to do it, but too few to justify setting up a nicer loop. 
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "68") & offset_magnitude > 0)
+  
+stan_offset_curve_sigma_comb_68_pos_interact <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert + 
+    offset_magnitude * sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "95") & offset_magnitude > 0)
+  
+stan_offset_curve_sigma_comb_95_pos_interact <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert + 
+    offset_magnitude * sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "68") & offset_magnitude < 0)
+  
+stan_offset_curve_sigma_comb_68_neg_interact <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert + 
+    offset_magnitude * sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+stan_df <- single_cals_curve_for_stan |>
+  filter(str_detect(hpd_area, "95") & offset_magnitude < 0)
+  
+stan_offset_curve_sigma_comb_95_neg_interact <- stan_glm(
+  accuracy ~ offset_magnitude + sigma_curve_uncert + 
+    offset_magnitude * sigma_curve_uncert,
+  data = stan_df, family = binomial(link = 'logit'))
+
+
+stan_offset_curve_sigma_comb_interact <- list(
+  stan_offset_curve_sigma_comb_68_pos_interact,
+  stan_offset_curve_sigma_comb_68_neg_interact,
+  stan_offset_curve_sigma_comb_95_pos_interact,
+  stan_offset_curve_sigma_comb_95_neg_interact
+)
+
+```
+
+```{r}
+write_rds(stan_offset_curve_sigma_comb_interact, 
+          "stan_offset_curve_sigma_comb_interact.rds")
+```
+
+```{r}
+summary(stan_offset_curve_sigma_comb_interact[[1]]) ##68pos
+```
+```{r}
+summary(stan_offset_curve_sigma_comb_interact[[2]]) ##68neg
+```
+
+```{r}
+summary(stan_offset_curve_sigma_comb_interact[[3]]) ##95pos
+```
+
+
+```{r}
+summary(stan_offset_curve_sigma_comb_interact[[4]]) ##95pos
+```
+
+```{r}
+stan_offset_curve_sigma_comb_interact <- read_rds(
+  "stan_offset_curve_sigma_comb_interact.rds")
+
+posterior_68_pos_interact <- as.array(stan_offset_curve_sigma_comb_interact[[1]])
+posterior_68_neg_interact <- as.array(stan_offset_curve_sigma_comb_interact[[2]])
+posterior_95_pos_interact <- as.array(stan_offset_curve_sigma_comb_interact[[3]])
+posterior_95_neg_interact <- as.array(stan_offset_curve_sigma_comb_interact[[4]])
+```
+
+```{r}
+color_scheme_set("blue")
+
+mcmc_hist(posterior_68_pos_interact, pars = c("(Intercept)", 
+                                              "offset_magnitude",
+                                              "sigma_curve_uncert", 
+                                              "offset_magnitude:sigma_curve_uncert"))
+mcmc_hist(posterior_68_neg_interact, pars = c("(Intercept)", 
+                                              "offset_magnitude",
+                                              "sigma_curve_uncert", 
+                                              "offset_magnitude:sigma_curve_uncert"))
+mcmc_hist(posterior_95_pos_interact, pars = c("(Intercept)", 
+                                              "offset_magnitude",
+                                              "sigma_curve_uncert", 
+                                              "offset_magnitude:sigma_curve_uncert"))
+mcmc_hist(posterior_95_neg_interact, pars = c("(Intercept)", 
+                                              "offset_magnitude",
+                                              "sigma_curve_uncert", 
+                                              "offset_magnitude:sigma_curve_uncert"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Part 15 Testing the model.
 Model testing come in two flavours. First, I'll get more data and see if the parameters are still the same. After that I'll get some more data with specific values and run predictions, to see if they match expectations.
